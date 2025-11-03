@@ -44,7 +44,7 @@ Zur Umsetzung werden folgende Sprachen und Technologien eingesetzt:
 
 
 Projektorganisation:
-Projektleiter: mit Kommunikantionsdaten, eMail und Handy 
+Projektleiter: Daniel Starchl-Barbu, d.starchl-barbu@students.htl-leonding.ac.at +43 660 914 2688 
 Team: Velocity
 
 Sinn / Zweck / USP
@@ -64,3 +64,4 @@ Woran kann das Ergebnis gemessen werden?
 
 Datum und Unterschrift der Projektauftraggeber – Namen bitte einsetzen!
 Das unterschriebene Dokument PDFen und mit richtiger Dokumentenbezeichung (Klasse_Projektname_Antrag) an die beteiligten Professoren schicken.
+
