@@ -5,7 +5,7 @@
 Eine Streak-App, in der Nutzerinnen und Nutzer online sogenannte „Streak-Versprechen“ abgeben können.
 Diese Versprechen müssen innerhalb von 24 Stunden eingehalten werden, um die persönliche Streak (Serie) aufrechtzuerhalten.
 Ein solches Versprechen besteht in der Regel aus einer Aufgabe, die zu einer guten Tat oder positiven Handlung motiviert – beispielsweise:
-„Sammle drei Kilogramm Müll an deinem lokalen See.“
+„Sammle ein halbes Kilogramm Müll an deinem lokalen See.“
 
 ## Projektauftraggeber
 
@@ -64,6 +64,7 @@ Bis zur ersten Überprüfung sollen der Chatroom vollständig funktionsfähig se
 Außerdem soll die Anwendung ein einzigartiges, ansprechendes Design erhalten – inspiriert von modernen Social-Media-Plattformen, jedoch in angemessenem Umfang, da man von einem Projekt von drei HTL-Schülern natürlich keine Ergebnisse eines Multimillionen-Dollar-Unternehmens erwarten kann.
 
 Datum und Unterschrift der Projektauftraggeber
+
 
 
 
