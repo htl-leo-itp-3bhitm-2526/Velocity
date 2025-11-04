@@ -65,11 +65,10 @@ Au√üerdem soll die Anwendung ein einzigartiges, ansprechendes Design erhalten ‚Ä
 
 Datum und Unterschrift der Projektauftraggeber
 
-(Bitte Namen eintragen und nach Unterzeichnung als PDF abspeichern und an die beteiligten Professoren senden.)
 
-Samuel Frafeleder, Daniel Starchl-Barbu, Freund Felix
 
-Dateiname: 3BHITM_Projektname_Antrag.pdf
+
+
 
 
 
