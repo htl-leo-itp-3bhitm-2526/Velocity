@@ -9,7 +9,7 @@ Ein solches Versprechen besteht in der Regel aus einer Aufgabe, die zu einer gut
 
 ## Projektauftraggeber
 
-Frau Prof. Rammelmüller
+Frau Prof. Rammelmüller und
 Herr Prof. Huemer
 
 ## Projekthintergrund / Motivation
@@ -70,5 +70,6 @@ Datum und Unterschrift der Projektauftraggeber
 Samuel Frafeleder, Daniel Starchl-Barbu, Freund Felix
 
 Dateiname: 3BHITM_Projektname_Antrag.pdf
+
 
 
