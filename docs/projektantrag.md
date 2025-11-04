@@ -57,13 +57,14 @@ Das Ziel des Projekts ist es, dass Kinder – oder besser gesagt Menschen jeden 
 
 ## Endergebnis
 
-Welches Ergebnis soll bis zur ersten Überprüfung erreicht werden?
-Woran kann das Ergebnis gemessen werden?
+**Welches Ergebnis soll bis zur ersten Überprüfung erreicht werden?**
+**Woran kann das Ergebnis gemessen werden?**
 
 Bis zur ersten Überprüfung sollen der Chatroom vollständig funktionsfähig sein und die Streak-Mechanik bereits in Bearbeitung sein.
 Außerdem soll die Anwendung ein einzigartiges, ansprechendes Design erhalten – inspiriert von modernen Social-Media-Plattformen, jedoch in angemessenem Umfang, da man von einem Projekt von drei HTL-Schülern natürlich keine Ergebnisse eines Multimillionen-Dollar-Unternehmens erwarten kann.
 
 Datum und Unterschrift der Projektauftraggeber
+
 
 
 
