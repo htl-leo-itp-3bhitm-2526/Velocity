@@ -4,7 +4,7 @@
 - https://www.figma.com/design/LEKhGSIx6eNw7F2QsjARWd/EcoStreak?node-id=0-1&t=PhjWw9tcu9EYXYDT-1)
 ## Arbeitseinteilung
 
-- Vorab (es wurde oft zusammen gearbeitet) Insgesamt kommen wir auf etwa 7:30 h mit Figma
+- Vorab (es wurde oft zusammen gearbeitet) Insgesamt kommen wir auf etwa 7h mit Figma in denen wir zusammengesessen sind
 
 **Felix**
 - Hat das Moodboard entworfen
