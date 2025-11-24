@@ -1,8 +1,7 @@
 ## Figma
 
 **Link**
-- https://www.figma.com/design/LEKHGSIx6eNW7F2QsjARWd/EcoStreak?node-id=0-1&t=srA2QIKE3u08gTAT-1
-
+- https://www.figma.com/design/LEKhGSIx6eNw7F2QsjARWd/EcoStreak?node-id=0-1&t=PhjWw9tcu9EYXYDT-1)
 ## Arbeitseinteilung
 
 - Vorab (es wurde oft zusammen gearbeitet) Insgesamt kommen wir auf etwa 7:30 h mit Figma
