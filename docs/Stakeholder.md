@@ -15,7 +15,7 @@
 
 ## 2 Unsere 15 wichtigsten Stakeholder
 
-WIR Haben uns Für Die folgenden 14 Stakeholder entschieden, weil sie Den größten Einfluss Auf Unser Projekt haben oder am stärksten davon betroffen sind:
+Wir haben uns Für Die folgenden 15 Stakeholder entschieden, weil sie Den größten Einfluss Auf Unser Projekt haben oder am stärksten davon betroffen sind:
 
 1. PROJEKTTEAM (samuel, daniel, felix)
 2. SCHÜLER / Die Klasse
