@@ -1,31 +1,33 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="de">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>EcoStreak - Nachhaltig leben</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="./style.css">
 </head>
 <body>
-    <header class="app-header">
-        <div class="header-content">
-            <div class="header-left">
-                <i class="fas fa-bars menu-icon"></i>
-            </div>
 
-            <div class="header-center">
-                <img src="./img/logo.png" alt="Leaf Logo" class="logo-image">
-                <span class="app-name">EcoStreak</span>
-            </div>
+    <nav class="bottom-nav">
+        <a href="#home" class="bottom-nav-link active" data-section="home" title="Home">
+            <i class="fas fa-home"></i>
+            <span class="nav-label">Home</span>
+        </a>
+        <a href="#tasks" class="bottom-nav-link" data-section="tasks" title="Aufgaben">
+            <i class="fas fa-tasks"></i>
+            <span class="nav-label">Aufgaben</span>
+        </a>
+        <a href="#friends" class="bottom-nav-link" data-section="friends" title="Freunde">
+            <i class="fas fa-users"></i>
+            <span class="nav-label">Freunde</span>
+        </a>
+        <a href="#profile" class="bottom-nav-link" data-section="profile" title="Profil">
+            <i class="fas fa-user"></i>
+            <span class="nav-label">Profil</span>
+        </a>
+    </nav>
 
-            <div class="header-right">
-                <i class="fas fa-bell-slash icon notification-icon"></i>
-                <i class="fas fa-cog icon settings-icon"></i>
-            </div>
-        </div>
-        <div class="bottom-bar"></div>
-    </header>
-    
-    
+    <script src="./script.js"></script>
 </body>
 </html>
