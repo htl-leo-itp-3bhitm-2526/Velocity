@@ -6,6 +6,7 @@
     <title>EcoStreak - Nachhaltig leben</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="./style.css">
+    <script src="./script.js" defer></script>
 </head>
 <body>
     <header class="app-header">
@@ -33,6 +34,30 @@
         <div class="bottom-bar"></div>
     </header>
 
+    <nav class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h2>Menu</h2>
+            <button class="close-btn" id="closeBtn">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <ul class="nav-menu">
+            <li><a href="#home" class="nav-link active"><i class="fas fa-home"></i> Home</a></li>
+            <li><a href="#tasks" class="nav-link"><i class="fas fa-tasks"></i> Aufgaben</a></li>
+            <li><a href="#friends" class="nav-link"><i class="fas fa-users"></i> Freunde</a></li>
+            <li><a href="#profile" class="nav-link"><i class="fas fa-user"></i> Profil</a></li>
+        </ul>
+        <div class="sidebar-footer">
+            <a href="#logout" class="logout-link"><i class="fas fa-sign-out-alt"></i> Abmelden</a>
+        </div>
+    </nav>
+
+    <div class="overlay" id="overlay"></div>
+
+    
+       
+    </main>
+
     <nav class="bottom-nav">
         <a href="#home" class="bottom-nav-link active" data-section="home" title="Home">
             <i class="fas fa-home"></i>
@@ -52,6 +77,5 @@
         </a>
     </nav>
 
-    <script src="./script.js"></script>
 </body>
 </html>
