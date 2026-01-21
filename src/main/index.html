@@ -6,8 +6,57 @@
     <title>EcoStreak - Nachhaltig leben</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="./style.css">
+    <script src="./script.js" defer></script>
 </head>
 <body>
+    <header class="app-header">
+        <div class="header-content">
+            <div class="header-left">
+                <button class="menu-btn" id="menuBtn">
+                    <i class="fas fa-bars menu-icon"></i>
+                </button>
+            </div>
+
+            <div class="header-center">
+                <img src="../main/img/logo.png" alt="Leaf Logo" class="logo-image">
+                <span class="app-name">EcoStreak</span>
+            </div>
+
+            <div class="header-right">
+                <button class="icon-btn notification-btn" title="Benachrichtigungen">
+                    <i class="fas fa-bell-slash notification-icon"></i>
+                </button>
+                <button class="icon-btn settings-btn" title="Einstellungen">
+                    <i class="fas fa-cog settings-icon"></i>
+                </button>
+            </div>
+        </div>
+        <div class="bottom-bar"></div>
+    </header>
+
+    <nav class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h2>Menu</h2>
+            <button class="close-btn" id="closeBtn">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <ul class="nav-menu">
+            <li><a href="#home" class="nav-link active"><i class="fas fa-home"></i> Home</a></li>
+            <li><a href="#tasks" class="nav-link"><i class="fas fa-tasks"></i> Aufgaben</a></li>
+            <li><a href="#friends" class="nav-link"><i class="fas fa-users"></i> Freunde</a></li>
+            <li><a href="#profile" class="nav-link"><i class="fas fa-user"></i> Profil</a></li>
+        </ul>
+        <div class="sidebar-footer">
+            <a href="#logout" class="logout-link"><i class="fas fa-sign-out-alt"></i> Abmelden</a>
+        </div>
+    </nav>
+
+    <div class="overlay" id="overlay"></div>
+
+    
+       
+    </main>
 
     <div id="home" class="full-screen"></div>
     <div id="tasks"class="full-screen" ></div>
@@ -33,6 +82,5 @@
         </a>
     </nav>
 
-    <script src="./script.js"></script>
 </body>
 </html>
