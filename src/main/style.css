@@ -9,7 +9,7 @@
     --transition: all 0.3s ease;
 }
 
-* {
+⁠*⁠{
     margin: 0;
     padding: 0;
     box-sizing: border-box;
@@ -26,8 +26,6 @@ html, body {
     background-color: var(--background-color);
     color: var(--text-color);
 }
-
-/* ===== HEADER & NAVIGATION ===== */
 
 .app-header {
     width: 100%;
