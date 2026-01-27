@@ -9,6 +9,12 @@
     --transition: all 0.3s ease;
 }
 
+html, body {
+    margin: 0;
+    padding: 0;
+}
+
+
 ⁠*⁠{
     margin: 0;
     padding: 0;
@@ -39,13 +45,20 @@ html, body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 1.25rem;
-    height: 4.75rem;
+    padding: 0 1.25rem;
+    
+    height:  4.75rem;
 }
 
 .header-left {
     flex: 1;
 }
+.header-right {
+    flex: 1;
+    display: flex;
+    align-items: center;
+}
+
 
 .menu-btn {
     background: none;
