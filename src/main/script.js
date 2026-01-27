@@ -1,86 +1,43 @@
-// DOM Elements
-const menuBtn = document.getElementById('menuBtn');
-const closeBtn = document.getElementById('closeBtn');
-const sidebar = document.getElementById('sidebar');
-const overlay = document.getElementById('overlay');
-const navLinks = document.querySelectorAll('.nav-link');
-const bottomNavLinks = document.querySelectorAll('.bottom-nav-link');
-const contentSections = document.querySelectorAll('.content-section');
-const mainContent = document.querySelector('.main-content');
+const menuBtn = document.getElementById('menuBtn')
+const closeBtn = document.getElementById('closeBtn')
+const sidebar = document.getElementById('sidebar')
+const overlay = document.getElementById('overlay')
+const navLinks = document.querySelectorAll('.nav-link')
+const bottomNavLinks = document.querySelectorAll('.bottom-nav-link')
+const sections = document.querySelectorAll('.content-section')
 
-// Toggle Sidebar
-menuBtn.addEventListener('click', () => {
-    sidebar.classList.add('active');
-    overlay.classList.add('active');
-    document.body.style.overflow = 'hidden';
-});
-
-closeBtn.addEventListener('click', () => {
-    closeSidebar();
-});
-
-overlay.addEventListener('click', () => {
-    closeSidebar();
-});
-
-function closeSidebar() {
-    sidebar.classList.remove('active');
-    overlay.classList.remove('active');
-    document.body.style.overflow = 'auto';
+const toggleMenu = (isOpen) => {
+  sidebar.classList.toggle('active', isOpen)
+  overlay.classList.toggle('active', isOpen)
+  document.body.style.overflow = isOpen ? 'hidden' : 'auto'
 }
 
-// Navigation function
-function navigateToSection(sectionId) {
-    // Remove active class from all nav links (sidebar and bottom)
-    navLinks.forEach(l => l.classList.remove('active'));
-    bottomNavLinks.forEach(l => l.classList.remove('active'));
-    
-    // Add active class to corresponding links
-    const sidebarLink = document.querySelector(`.nav-link[href="#${sectionId}"]`);
-    const bottomLink = document.querySelector(`.bottom-nav-link[data-section="${sectionId}"]`);
-    
-    if (sidebarLink) sidebarLink.classList.add('active');
-    if (bottomLink) bottomLink.classList.add('active');
-    
-    // Hide all sections
-    contentSections.forEach(section => section.classList.remove('active'));
-    
-    // Show target section
-    const targetSection = document.getElementById(sectionId);
-    if (targetSection) {
-        targetSection.classList.add('active');
-    }
-    
-    // Close sidebar if open
-    closeSidebar();
+const navigateTo = (id) => {
+  navLinks.forEach(el => el.classList.toggle('active', el.getAttribute('href') === `#${id}`))
+  bottomNavLinks.forEach(el => el.classList.toggle('active', el.dataset.section === id))
+  sections.forEach(s => s.classList.toggle('active', s.id === id))
+  
+  toggleMenu(false)
 }
 
-// Sidebar navigation links
+menuBtn.onclick = () => toggleMenu(true)
+closeBtn.onclick = () => toggleMenu(false)
+overlay.onclick = () => toggleMenu(false)
+
 navLinks.forEach(link => {
-    link.addEventListener('click', (e) => {
-        e.preventDefault();
-        const targetId = link.getAttribute('href').substring(1);
-        navigateToSection(targetId);
-    });
-});
+  link.onclick = (e) => {
+    e.preventDefault()
+    navigateTo(link.getAttribute('href').slice(1))
+  }
+})
 
-// Bottom navigation links
 bottomNavLinks.forEach(link => {
-    link.addEventListener('click', (e) => {
-        e.preventDefault();
-        const targetId = link.getAttribute('data-section');
-        navigateToSection(targetId);
-        navigateToSection(targetId);
-    });
-});
+  link.onclick = (e) => {
+    e.preventDefault()
+    navigateTo(link.dataset.section)
+  }
+})
 
-// Keyboard navigation
-document.addEventListener('keydown', (e) => {
-    // Close sidebar with Escape key
-    if (e.key === 'Escape' && sidebar.classList.contains('active')) {
-        closeSidebar();
-    }
-});
-
-// Initialize
-console.log('EcoStreak App geladen!');
+document.onkeydown = (e) => {
+  if (e.key === 'Escape') toggleMenu(false)
+}
