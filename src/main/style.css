@@ -353,6 +353,7 @@ html, body {
     align-items: center;
     z-index: 100;
     box-shadow: 0 -0.125rem 0.5rem rgba(0, 0, 0, 0.1);
+    position: fixed;
 }
 
 .bottom-nav-link {
@@ -400,8 +401,8 @@ html, body {
 
 /* ===== Full Screen Pages ===== */
 .full-screen {
-    width: 100%;
-    height: calc(100vh - 4.75rem - 6.25rem);
+    width: 95%;
+    height: calc(105vh - 4.75rem - 6.25rem);
     overflow-y: auto;
     overflow-x: hidden;
     padding: 1.875rem 1.25rem;
@@ -431,7 +432,7 @@ html, body {
 #home{
     font-size: 1.25rem;
     margin-bottom: 1.25rem;
-    scroll-behavior: smooth;
+    scroll-behavior: smooth; 
 }
 #home img{
     width: 30%;
@@ -453,4 +454,40 @@ html, body {
     font-size: 1.25rem;
     margin-bottom: 1.25rem;
     display: none;
+}
+#acceptBtn{
+    width: 3rem;
+    height: 3rem;
+    background-color: var(--primary-color);
+    border-radius: 50%;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    font-size: 1.5rem;
+    margin: 1rem;
+    cursor: pointer;
+    box-shadow: var(--shadow);
+    transition: var(--transition);
+}
+#deniedBtn{
+    width: 3rem;
+    height: 3rem;
+    background-color: #dc3545;
+    border-radius: 50%;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    font-size: 1.5rem;
+    margin: 1rem;
+    cursor: pointer;
+    box-shadow: var(--shadow);
+    transition: var(--transition);
+}
+.autoLayout{
+    display: flex;
+    justify-content: center;
+    align-items:flex-end;
+   
 }
