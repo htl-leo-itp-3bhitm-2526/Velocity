@@ -55,27 +55,49 @@
 
     
        
-    </main>
+    <main></main>
 
-    <div id="home" class="full-screen"></div>
-    <div id="tasks"class="full-screen" ></div>
-    <div id="friends" class="full-screen"></div>
-    <div id="profile" class="full-screen"></div>
+    <div id="home" class="full-screen">
+        <div class="home-content">
+            <h1>Willkommen bei EcoStreak!</h1>
+            <img src="../img/wald.jpg" alt="wald">
+            <p>Deine Reise zu einem nachhaltigeren Leben beginnt hier.</p>
+        </div>
+
+    </div>
+    <div id="tasks"class="full-screen" >
+        <div class="tasks-content">
+            <h1>Aufgaben</h1>
+            <p>Hier findest du deine täglichen nachhaltigen Aufgaben.</p>
+        </div>
+    </div>
+    <div id="friends" class="full-screen">
+        <div class="friends-content">
+            <h1>Freunde</h1>
+            <p>Verbinde dich mit Freunden und teile deine Fortschritte.</p>
+        </div>
+    </div>
+    <div id="profile" class="full-screen">
+        <div class="profile-content">
+            <h1>Profil</h1>
+            <p>Verwalte deine Einstellungen und persönlichen Informationen.</p>
+        </div>
+    </div>
 
     <nav class="bottom-nav">
-        <a href="#home" class="bottom-nav-link active" data-section="home" title="Home">
+        <a href="#home" onclick="updateActPage('home')" class="bottom-nav-link active" data-section="home" title="Home">
             <i class="fas fa-home"></i>
-            <span class="nav-label">Home</span>
+            <span  class="nav-label">Home</span>
         </a>
-        <a href="#tasks" class="bottom-nav-link" data-section="tasks" title="Aufgaben">
-            <i class="fas fa-tasks"></i>
+        <a href="#tasks" onclick="updateActPage('tasks')" class="bottom-nav-link" data-section="tasks" title="Aufgaben">
+            <i  class="fas fa-tasks"></i>
             <span class="nav-label">Aufgaben</span>
         </a>
-        <a href="#friends" class="bottom-nav-link" data-section="friends" title="Freunde">
+        <a href="#friends" onclick="updateActPage('friends')" class="bottom-nav-link" data-section="friends" title="Freunde">
             <i class="fas fa-users"></i>
             <span class="nav-label">Freunde</span>
         </a>
-        <a href="#profile" class="bottom-nav-link" data-section="profile" title="Profil">
+        <a href="#profile" onclick="updateActPage('profile')" class="bottom-nav-link" data-section="profile" title="Profil">
             <i class="fas fa-user"></i>
             <span class="nav-label">Profil</span>
         </a>

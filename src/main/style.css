@@ -398,6 +398,59 @@ html, body {
     font-weight: 600;
 }
 
-/* ===== RESPONSIVE DESIGN (MOBILE-FIRST ONLY) ===== */
+/* ===== Full Screen Pages ===== */
+.full-screen {
+    width: 100%;
+    height: calc(100vh - 4.75rem - 6.25rem);
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 1.875rem 1.25rem;
+    scroll-behavior: smooth;
+}
 
-/* All styles optimized for mobile devices */
+.full-screen > div {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.full-screen h1 {
+    color: var(--primary-color);
+    margin: 0;
+    font-size: 1.75rem;
+}
+
+.full-screen p {
+    color: #666;
+    margin: 0;
+    font-size: 1rem;
+    line-height: 1.6;
+}
+
+/* ===== Homepage ===== */
+#home{
+    font-size: 1.25rem;
+    margin-bottom: 1.25rem;
+    scroll-behavior: smooth;
+}
+#home img{
+    width: 30%;
+    height: auto;
+    border-radius: 0.75rem;
+    box-shadow: var(--shadow);
+}
+#tasks{
+    font-size: 1.25rem;
+    margin-bottom: 1.25rem;
+    display: none;
+}
+#friends{
+    font-size: 1.25rem;
+    margin-bottom: 1.25rem;
+    display: none;
+}
+#profile{
+    font-size: 1.25rem;
+    margin-bottom: 1.25rem;
+    display: none;
+}
