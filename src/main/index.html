@@ -54,14 +54,12 @@
     <div class="overlay" id="overlay"></div>
 
     
-       
-    <main></main>
 
     <div id="home" class="full-screen">
         <div class="home-content">
             <h1>Willkommen bei EcoStreak!</h1>
-            <img src="../img/wald.jpg" alt="wald">
-            <p>Deine Reise zu einem nachhaltigeren Leben beginnt hier.</p>
+            <img id="template_img" src="../img/wald.jpg" alt="wald">
+            <p>MÜLL IM WALD SAMMELN</p>
 
             <div class="AutoLayout">
                  <div id="acceptBtn"><i class="fa fa-check" aria-hidden="true"></i></div>
@@ -73,24 +71,98 @@
         </div>
 
     </div>
-    <div id="tasks"class="full-screen" >
-        <div class="tasks-content">
-            <h1>Aufgaben</h1>
-            <p>Hier findest du deine täglichen nachhaltigen Aufgaben.</p>
-        </div>
+
+    
+    <div id="tasks" class="full-screen">
+    <div class="tasks-header">
+        <h1>AUFGABEN- ÜBERSICHT</h1>
     </div>
+
+    <div class="tasks-main-content">
+        <section class="task-group">
+            <h2 class="group-label">AUFGABEN DER WOCHE</h2>
+            <div id="weekly-tasks-container">
+                </div>
+        </section>
+
+        <section class="task-group">
+            <h2 class="group-label">WEITERE AUFGABEN</h2>
+            <div id="other-tasks-container">
+                </div>
+        </section>
+    </div>
+</div>
+
     <div id="friends" class="full-screen">
-        <div class="friends-content">
-            <h1>Freunde</h1>
-            <p>Verbinde dich mit Freunden und teile deine Fortschritte.</p>
+    <div class="friends-streak-header">
+        <h1 id="dynamic-streak">DEINE STREAK: -- TAGE</h1>
+    </div>
+
+    <div class="friends-main-card">
+        <div id="friends-list-container">
+            </div>
+
+        <div class="dm-section">
+            <span class="section-label">DIRECT MESSAGES</span>
+            <div class="dm-grid" id="dm-list-container">
+                </div>
         </div>
     </div>
+</div>
+
+    
     <div id="profile" class="full-screen">
-        <div class="profile-content">
-            <h1>Profil</h1>
-            <p>Verwalte deine Einstellungen und persönlichen Informationen.</p>
+    <div class="profile-header-bg">
+        <h1>PROFIL</h1>
+    </div>
+    <div class="profile-card">
+        <div class="profile-top-row">
+            <div class="avatar-container">
+                <img id="user-avatar" src="avatar.png" alt="User">
+            </div>
+            <div class="streak-badge">
+                <i class="fas fa-leaf"></i>
+                <div>
+                    <strong id="streak-days">0 TAGE</strong>
+                    <span>STREAK</span>
+                </div>
+            </div>
+        </div>
+        <div class="user-info">
+            <h2 id="user-name">LÄDT...</h2>
+            <p id="user-location">ORGANISATION</p>
         </div>
     </div>
+
+    <div class="stats-section">
+        <h3>DEINE STATISTIKEN</h3>
+        <div class="stats-grid">
+            <div class="stat-box">
+                <i class="fas fa-trash-alt"></i>
+                <div class="stat-text">
+                    <strong id="stat-trash">0 kg</strong>
+                    <span>Müll gesammelt</span>
+                </div>
+            </div>
+            <div class="stat-box">
+                <i class="fas fa-tint"></i>
+                <div class="stat-text">
+                    <strong id="stat-water">0 L</strong>
+                    <span>Wasser gespart</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="badges-section">
+        <h3>ABZEICHEN</h3>
+        <div id="badge-container" class="badge-list">
+            <div class="badge-icon"><i class="fas fa-star"></i></div>
+            <div class="badge-icon"><i class="fas fa-bottle-water"></i></div>
+            <div class="badge-icon"><i class="fas fa-recycle"></i></div>
+        </div>
+    </div>
+</div>
 
     <nav class="bottom-nav">
         <a href="#home" onclick="updateActPage('home')" class="bottom-nav-link active" data-section="home" title="Home">

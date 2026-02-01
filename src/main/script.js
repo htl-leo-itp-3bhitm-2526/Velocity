@@ -78,3 +78,21 @@ function updateActPage(page){
   }
  
 }
+
+const friendsData = [
+    { name: "Samuel", img: "samuel.png", online: true },
+    { name: "XYZ", img: "xyz.png", online: false }
+]
+
+const container = document.getElementById('friends-list-container');
+
+friendsData.forEach(friend => {
+    const html = `
+        <div class="friend-row ${friend.online ? 'is-online' : ''}">
+            <div class="friend-avatar" style="background-image: url(${friend.img})"></div>
+            <span class="friend-name">${friend.name}</span>
+            <div class="online-indicator"></div>
+        </div>
+    `
+    container.innerHTML += html;
+})
