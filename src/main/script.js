@@ -54,7 +54,7 @@ function updateActPage(page){
       friendsSection.style.display = 'none'; 
       profileSection.style.display = 'none';     
       tasksSection.style.display = 'none';
-      homeSection.style.display = 'block';
+      homeSection.style.display = 'flex';
       break;
       
       case 'tasks':
