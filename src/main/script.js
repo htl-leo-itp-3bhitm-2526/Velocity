@@ -96,3 +96,135 @@ friendsData.forEach(friend => {
     `
     container.innerHTML += html;
 })
+
+// Task management
+let allTasks = { weekly: [], daily: [] };
+let currentTask = null;
+let acceptedTasks = JSON.parse(localStorage.getItem('acceptedTasks')) || [];
+
+// Load tasks from JSON
+async function loadTasks() {
+    try {
+        const response = await fetch('../../assets/tasks.json');
+        allTasks = await response.json();
+        loadRandomTask();
+    } catch (error) {
+        console.error('Fehler beim Laden der Tasks:', error);
+    }
+}
+
+// Get random task
+function getRandomTask() {
+    const weeklyTasks = allTasks.weekly || [];
+    if (weeklyTasks.length === 0) return null;
+    
+    const randomIndex = Math.floor(Math.random() * weeklyTasks.length);
+    return weeklyTasks[randomIndex];
+}
+
+// Load and display random task
+function loadRandomTask() {
+    currentTask = getRandomTask();
+    if (currentTask) {
+        displayTask(currentTask);
+    }
+}
+
+// Display task in home section
+function displayTask(task) {
+    const homeContent = document.querySelector('.home-content h1');
+    const taskText = document.querySelector('.home-content p');
+    const taskImage = document.getElementById('template_img');
+    
+    if (homeContent) {
+        homeContent.textContent = 'Deine neue Aufgabe!';
+    }
+    if (taskText) {
+        taskText.textContent = task.task.toUpperCase();
+    }
+    if (taskImage) {
+        taskImage.alt = task.task;
+    }
+}
+
+// Accept task
+function acceptTask() {
+    if (currentTask) {
+        const taskWithDate = {
+            ...currentTask,
+            acceptedDate: new Date().toISOString(),
+            status: 'active'
+        };
+        
+        acceptedTasks.push(taskWithDate);
+        localStorage.setItem('acceptedTasks', JSON.stringify(acceptedTasks));
+        
+        // Show success message
+        alert('Aufgabe angenommen! Du findest sie in deiner Aufgabenübersicht.');
+        
+        // Load new random task
+        loadRandomTask();
+    }
+}
+
+// Deny task
+function denyTask() {
+    // Just load a new random task
+    loadRandomTask();
+}
+
+// Event listeners for accept/deny buttons
+const acceptBtn = document.getElementById('acceptBtn');
+const deniedBtn = document.getElementById('deniedBtn');
+
+if (acceptBtn) {
+    acceptBtn.addEventListener('click', acceptTask);
+}
+
+if (deniedBtn) {
+    deniedBtn.addEventListener('click', denyTask);
+}
+
+// Load tasks on page load
+loadTasks();
+
+// Handle task accept buttons
+document.addEventListener('click', function(e) {
+    if (e.target.classList.contains('task-accept-btn')) {
+        const taskName = e.target.getAttribute('data-task');
+        const taskIcon = e.target.getAttribute('data-icon');
+        
+        // Create task object
+        const task = {
+            id: Date.now(),
+            task: taskName,
+            icon: taskIcon,
+            acceptedDate: new Date().toISOString(),
+            status: 'accepted'
+        };
+        
+        // Get existing tasks
+        let acceptedTasks = JSON.parse(localStorage.getItem('acceptedTasks')) || [];
+        
+        // Add new task
+        acceptedTasks.push(task);
+        
+        // Save to localStorage
+        localStorage.setItem('acceptedTasks', JSON.stringify(acceptedTasks));
+        
+        // Transform the task card to accepted style
+        const taskCard = e.target.closest('.task-card');
+        if (taskCard) {
+            taskCard.innerHTML = `
+                <div class="accepted-task-inner">
+                    <div class="accepted-task-icon">
+                        <i class="${taskIcon}"></i>
+                    </div>
+                    <h3 class="accepted-task-title">${taskName}</h3>
+                    <button class="accepted-task-btn">Akzeptiert</button>
+                </div>
+            `;
+            taskCard.classList.add('task-card-accepted');
+        }
+    }
+});
