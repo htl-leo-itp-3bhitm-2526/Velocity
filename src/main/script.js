@@ -228,3 +228,36 @@ document.addEventListener('click', function(e) {
         }
     }
 });
+
+function handleCredentialResponse(response) {
+    let data = JSON.parse(atob(response.credential.split('.')[1]))
+    
+    let userObj = {
+        name: data.name,
+        email: data.email,
+        picture: data.picture,
+        isLoggedIn: true
+    }
+
+    localStorage.setItem('ecoUser', JSON.stringify(userObj))
+    renderProfile(userObj)
+}
+
+function renderProfile(user) {
+    if (!user) return;
+
+    let nameEl = document.getElementById('user-name')
+    let avatarEl = document.getElementById('user-avatar')
+    let locationEl = document.getElementById('user-location')
+
+    if (nameEl) nameEl.textContent = user.name
+    if (avatarEl) avatarEl.src = user.picture
+    if (locationEl) locationEl.textContent = user.email
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    const savedUser = localStorage.getItem('ecoUser')
+    if (savedUser) {
+        renderProfile(JSON.parse(savedUser))
+    }
+})

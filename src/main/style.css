@@ -867,3 +867,18 @@ h1 { color: #4a7c44; font-size: 1.2rem; margin-bottom: 15px; }
 .task-group {
     margin-bottom: 30px;
 }
+
+.profile-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+
+.g_id_signin {
+    margin-top: 20px;
+    margin-bottom: 10px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    border-radius: 25px;
+    overflow: hidden;
+}
