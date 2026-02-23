@@ -75,6 +75,16 @@ function updateActPage(page){
         tasksSection.style.display = 'none';
         profileSection.style.display='block';
       break;
+
+      case 'profile':
+    homeSection.style.display = 'none';
+    friendsSection.style.display = 'none';
+    tasksSection.style.display = 'none';
+    profileSection.style.display = 'block';
+
+    const user = JSON.parse(localStorage.getItem('ecoUser'));
+    if (user) renderProfile(user);
+    break;
   }
  
 }
@@ -249,10 +259,12 @@ function renderProfile(user) {
     let nameEl = document.getElementById('user-name')
     let avatarEl = document.getElementById('user-avatar')
     let locationEl = document.getElementById('user-location')
+    let loginBtn = document.querySelector('.g_id_signin');
 
     if (nameEl) nameEl.textContent = user.name
     if (avatarEl) avatarEl.src = user.picture
     if (locationEl) locationEl.textContent = user.email
+    if (loginBtn) loginBtn.style.display = 'none';
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -261,3 +273,8 @@ document.addEventListener('DOMContentLoaded', () => {
         renderProfile(JSON.parse(savedUser))
     }
 })
+
+window.onload = () => {
+    navigateTo('home');
+    updateActPage('home');
+};
