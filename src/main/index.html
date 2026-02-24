@@ -226,6 +226,25 @@
                 </div>
         </div>
     </div>
+    
+    <!-- Chat Modal -->
+    <div id="chat-modal" class="chat-modal" style="display: none;">
+        <div class="chat-modal-content">
+            <button class="chat-close-btn" onclick="closeChatModal()">
+                <i class="fas fa-times"></i>
+            </button>
+            <div class="chat-header-modal">
+                <h3 id="chat-friend-name">Chat</h3>
+            </div>
+            <div id="chat-messages" class="chat-messages"></div>
+            <div class="chat-input-area">
+                <input type="text" id="chat-message-input" placeholder="Nachricht eingeben..." autocomplete="off">
+                <button onclick="sendChatMessage()" class="chat-send-btn">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </div>
+        </div>
+    </div>
 </div>
 
     

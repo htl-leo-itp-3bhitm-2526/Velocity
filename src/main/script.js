@@ -88,7 +88,7 @@ const container = document.getElementById('friends-list-container');
 
 friendsData.forEach(friend => {
     const html = `
-        <div class="friend-row ${friend.online ? 'is-online' : ''}">
+        <div class="friend-row ${friend.online ? 'is-online' : ''}" onclick="openChat('${friend.name}')">
             <div class="friend-avatar" style="background-image: url(${friend.img})"></div>
             <span class="friend-name">${friend.name}</span>
             <div class="online-indicator"></div>
@@ -96,6 +96,88 @@ friendsData.forEach(friend => {
     `
     container.innerHTML += html;
 })
+
+// ===== CHAT FUNKTIONALITÄT (LOKAL) =====
+let currentUsername = localStorage.getItem('chatUsername') || 'User' + Math.floor(Math.random() * 1000);
+localStorage.setItem('chatUsername', currentUsername);
+let currentChatFriend = null;
+let chatMessages = JSON.parse(localStorage.getItem('chatMessages')) || {};
+
+
+function openChat(friendName) {
+    currentChatFriend = friendName;
+    document.getElementById('chat-friend-name').textContent = friendName;
+    document.getElementById('chat-modal').style.display = 'flex';
+    document.getElementById('chat-messages').innerHTML = '';
+    document.getElementById('chat-message-input').focus();
+
+  
+    const savedMessages = JSON.parse(localStorage.getItem('chatMessages')) || {};
+    if (savedMessages[friendName]) {
+        savedMessages[friendName].forEach(msg => {
+            addMessageToChat(msg.text, msg.own, msg.user);
+        });
+    }
+}
+
+function closeChatModal() {
+    document.getElementById('chat-modal').style.display = 'none';
+    currentChatFriend = null;
+}
+
+function sendChatMessage() {
+    const input = document.getElementById('chat-message-input');
+    const message = input.value.trim();
+
+    if (!message || !currentChatFriend) return;
+
+    if (!chatMessages[currentChatFriend]) {
+        chatMessages[currentChatFriend] = [];
+    }
+
+    chatMessages[currentChatFriend].push({
+        text: message,
+        own: true,
+        user: currentUsername,
+        timestamp: new Date().toISOString()
+    });
+
+    localStorage.setItem('chatMessages', JSON.stringify(chatMessages));
+
+    addMessageToChat(message, true, currentUsername);
+
+    input.value = '';
+    input.focus();
+}
+
+function addMessageToChat(text, isOwn, username = '') {
+    const messagesContainer = document.getElementById('chat-messages');
+    const messageEl = document.createElement('div');
+    messageEl.className = `chat-message ${isOwn ? 'own' : ''}`;
+
+    messageEl.innerHTML = `
+        <div class="chat-bubble">${escapeHtml(text)}</div>
+    `;
+
+    messagesContainer.appendChild(messageEl);
+
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && !e.shiftKey && document.getElementById('chat-modal').style.display !== 'none') {
+        e.preventDefault();
+        sendChatMessage();
+    }
+});
+// ===== ENDE CHAT FUNKTIONALITÄT =====
 
 // Task management
 let allTasks = { weekly: [], daily: [] };
