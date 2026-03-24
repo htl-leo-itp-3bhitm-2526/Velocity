@@ -193,6 +193,13 @@ document.addEventListener('keydown', function(e) {
 let allTasks = { weekly: [], daily: [] };
 let currentTask = null;
 let acceptedTasks = JSON.parse(localStorage.getItem('acceptedTasks')) || [];
+let taskCard = null;
+let swipeStartX = 0;
+let swipeCurrentX = 0;
+let isDraggingTaskCard = false;
+const SWIPE_THRESHOLD = 100;
+const SWIPE_MAX_ROTATION = 12;
+let decisionFeedbackTimeout = null;
 
 // Load tasks from JSON
 async function loadTasks() {
@@ -209,9 +216,22 @@ async function loadTasks() {
 function getRandomTask() {
     const weeklyTasks = allTasks.weekly || [];
     if (weeklyTasks.length === 0) return null;
-    
-    const randomIndex = Math.floor(Math.random() * weeklyTasks.length);
-    return weeklyTasks[randomIndex];
+
+    if (!currentTask || weeklyTasks.length === 1) {
+        const randomIndex = Math.floor(Math.random() * weeklyTasks.length);
+        return weeklyTasks[randomIndex];
+    }
+
+    let nextTask = currentTask;
+    let safetyCounter = 0;
+
+    while (nextTask?.task === currentTask?.task && safetyCounter < 10) {
+        const randomIndex = Math.floor(Math.random() * weeklyTasks.length);
+        nextTask = weeklyTasks[randomIndex];
+        safetyCounter += 1;
+    }
+
+    return nextTask;
 }
 
 // Load and display random task
@@ -239,9 +259,62 @@ function displayTask(task) {
     }
 }
 
+function showTaskDecisionFeedback(type) {
+    if (!taskCard) return;
+
+    let feedback = document.getElementById('taskDecisionFeedback');
+    if (!feedback) {
+        feedback = document.createElement('div');
+        feedback.id = 'taskDecisionFeedback';
+        feedback.className = 'task-decision-feedback';
+        taskCard.appendChild(feedback);
+    }
+
+    let flash = document.getElementById('taskDecisionFlash');
+    if (!flash) {
+        flash = document.createElement('div');
+        flash.id = 'taskDecisionFlash';
+        flash.className = 'task-decision-flash';
+        taskCard.appendChild(flash);
+    }
+
+    const isAccept = type === 'accept';
+    feedback.innerHTML = isAccept
+        ? '<i class="fas fa-check-circle"></i> GEMACHT'
+        : '<i class="fas fa-times-circle"></i> NICHT GEMACHT';
+
+    feedback.classList.remove('accept', 'deny', 'show');
+    flash.classList.remove('accept', 'deny', 'show');
+    taskCard.classList.remove('decision-accept', 'decision-deny');
+
+    void feedback.offsetWidth;
+    void flash.offsetWidth;
+
+    feedback.classList.add(isAccept ? 'accept' : 'deny', 'show');
+    flash.classList.add(isAccept ? 'accept' : 'deny', 'show');
+    taskCard.classList.add(isAccept ? 'decision-accept' : 'decision-deny');
+
+    clearTimeout(decisionFeedbackTimeout);
+    decisionFeedbackTimeout = setTimeout(() => {
+        feedback.classList.remove('show');
+        flash.classList.remove('show');
+        taskCard.classList.remove('decision-accept', 'decision-deny');
+    }, 900);
+}
+
 // Accept task
 function acceptTask() {
     if (currentTask) {
+        const alreadyAccepted = acceptedTasks.some(task =>
+            task.task === currentTask.task && (task.status === 'active' || task.status === 'accepted')
+        );
+
+        if (alreadyAccepted) {
+            alert('Diese Aufgabe hast du bereits angenommen. Hier kommt eine neue!');
+            loadRandomTask();
+            return;
+        }
+
         const taskWithDate = {
             ...currentTask,
             acceptedDate: new Date().toISOString(),
@@ -250,19 +323,112 @@ function acceptTask() {
         
         acceptedTasks.push(taskWithDate);
         localStorage.setItem('acceptedTasks', JSON.stringify(acceptedTasks));
-        
-        // Show success message
-        alert('Aufgabe angenommen! Du findest sie in deiner Aufgabenübersicht.');
-        
-        // Load new random task
-        loadRandomTask();
+
+        showTaskDecisionFeedback('accept');
+        setTimeout(loadRandomTask, 700);
     }
 }
 
 // Deny task
 function denyTask() {
-    // Just load a new random task
-    loadRandomTask();
+    showTaskDecisionFeedback('deny');
+    setTimeout(loadRandomTask, 700);
+}
+
+function getClientXFromEvent(event) {
+    if (event.touches && event.touches.length > 0) {
+        return event.touches[0].clientX;
+    }
+
+    if (event.changedTouches && event.changedTouches.length > 0) {
+        return event.changedTouches[0].clientX;
+    }
+
+    return event.clientX;
+}
+
+function updateSwipeVisuals(distanceX) {
+    if (!taskCard) return;
+
+    const rotation = Math.max(-SWIPE_MAX_ROTATION, Math.min(SWIPE_MAX_ROTATION, distanceX / 14));
+    const opacity = Math.min(1, Math.abs(distanceX) / SWIPE_THRESHOLD);
+
+    taskCard.style.transform = `translateX(${distanceX}px) rotate(${rotation}deg)`;
+    taskCard.classList.toggle('swipe-right', distanceX > 20);
+    taskCard.classList.toggle('swipe-left', distanceX < -20);
+    taskCard.style.setProperty('--swipe-opacity', opacity.toString());
+}
+
+function resetSwipeCard() {
+    if (!taskCard) return;
+
+    taskCard.style.transform = '';
+    taskCard.style.removeProperty('--swipe-opacity');
+    taskCard.classList.remove('swipe-left', 'swipe-right', 'swipe-accept-anim', 'swipe-deny-anim');
+}
+
+function finalizeSwipe(distanceX) {
+    if (!taskCard) return;
+
+    if (distanceX > SWIPE_THRESHOLD) {
+        taskCard.classList.add('swipe-accept-anim');
+        setTimeout(() => {
+            acceptTask();
+            resetSwipeCard();
+        }, 160);
+        return;
+    }
+
+    if (distanceX < -SWIPE_THRESHOLD) {
+        taskCard.classList.add('swipe-deny-anim');
+        setTimeout(() => {
+            denyTask();
+            resetSwipeCard();
+        }, 160);
+        return;
+    }
+
+    resetSwipeCard();
+}
+
+function handleSwipeStart(event) {
+    if (!taskCard || !currentTask) return;
+
+    isDraggingTaskCard = true;
+    swipeStartX = getClientXFromEvent(event);
+    swipeCurrentX = swipeStartX;
+    taskCard.classList.add('is-swiping');
+}
+
+function handleSwipeMove(event) {
+    if (!isDraggingTaskCard || !taskCard) return;
+
+    swipeCurrentX = getClientXFromEvent(event);
+    const distanceX = swipeCurrentX - swipeStartX;
+
+    updateSwipeVisuals(distanceX);
+}
+
+function handleSwipeEnd() {
+    if (!isDraggingTaskCard || !taskCard) return;
+
+    isDraggingTaskCard = false;
+    taskCard.classList.remove('is-swiping');
+
+    const distanceX = swipeCurrentX - swipeStartX;
+    finalizeSwipe(distanceX);
+}
+
+function setupTaskSwipe() {
+    taskCard = document.querySelector('.home-content');
+    if (!taskCard) return;
+
+    taskCard.addEventListener('touchstart', handleSwipeStart, { passive: true });
+    taskCard.addEventListener('touchmove', handleSwipeMove, { passive: true });
+    taskCard.addEventListener('touchend', handleSwipeEnd);
+    taskCard.addEventListener('mousedown', handleSwipeStart);
+    window.addEventListener('mousemove', handleSwipeMove);
+    window.addEventListener('mouseup', handleSwipeEnd);
 }
 
 // Event listeners for accept/deny buttons
@@ -279,6 +445,7 @@ if (deniedBtn) {
 
 // Load tasks on page load
 loadTasks();
+setupTaskSwipe();
 
 // Handle task accept buttons
 document.addEventListener('click', function(e) {
