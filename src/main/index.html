@@ -59,21 +59,104 @@
 
     
 
-    <div id="home" class="full-screen">
-        <div class="home-content">
-            <h1>Willkommen bei EcoStreak!</h1>
-            <img id="template_img" src="../img/wald.jpg" alt="wald">
-            <p>MÜLL IM WALD SAMMELN</p>
-
-            <div class="AutoLayout">
-                 <div id="acceptBtn"><i class="fa fa-check" aria-hidden="true"></i></div>
-                <div id="deniedBtn"><i class="fa fa-times" aria-hidden="true"></i></div>
-            </div>
-           
-
-            
+    <div id="home" class="full-screen hero-screen">
+      <div class="hero-container">
+        
+        <div class="hero-header">
+          <h1 class="hero-title">Deine gute Tat für heute?</h1>
+          <p class="hero-subtitle">Jeder Tag zählt – sichern Sie Ihren Streak!</p>
         </div>
 
+        
+        <div class="streak-flame-container">
+          <div class="flame-wrapper">
+            <div class="flame flame-1"></div>
+            <div class="flame flame-2"></div>
+            <div class="flame flame-3"></div>
+          </div>
+          <div class="streak-counter">
+            <span class="streak-number" id="streakCount">12</span>
+            <span class="streak-label">Tage</span>
+          </div>
+        </div>
+
+        <!-- TIMER (24H) -->
+        <div class="timer-bar-container">
+          <div class="timer-label">Verbleibende Zeit heute:</div>
+          <div class="timer-progress">
+            <div class="timer-fill" style="width: 65%;"></div>
+          </div>
+          <div class="timer-time">15h 32m verbleibend</div>
+        </div>
+
+        
+        <div class="stats-counter">
+          <div class="stat-item">
+            <div class="stat-number" id="globalWaste">2.847</div>
+            <div class="stat-label">kg Müll heute</div>
+          </div>
+          <div class="stat-divider"></div>
+          <div class="stat-item">
+            <div class="stat-number" id="activeUsers">1.204</div>
+            <div class="stat-label">Aktive User</div>
+          </div>
+        </div>
+
+        <!-- AKTUELLE CHALLENGE CARD (GLASSMORPHISM) -->
+        <div class="challenge-card glassmorphism">
+          <div class="challenge-header">
+            <div class="challenge-icon">
+              <i class="fas fa-recycle"></i>
+            </div>
+            <span class="challenge-label">Heutige Challenge</span>
+          </div>
+          
+          <h2 class="challenge-title">Sammle 0,5kg Müll</h2>
+          
+          <div class="challenge-description">
+            <p>Gehe in die nächste Umgebung und sammle Müll auf. Mache ein Foto als Beweis und verdiene dir deinen täglichen Streak!</p>
+          </div>
+
+          <div class="challenge-reward">
+            <div class="reward-item">
+              <i class="fas fa-star"></i>
+              <span>50 Punkte</span>
+            </div>
+            <div class="reward-item">
+              <i class="fas fa-fire"></i>
+              <span>+1 Streak</span>
+            </div>
+          </div>
+
+          <button class="btn-primary btn-challenge" id="startChallengeBtn">
+            <i class="fas fa-arrow-right"></i> Challenge starten
+          </button>
+        </div>
+
+        <!-- SOCIAL PROOF - LETZTE UPLOADS -->
+        <div class="social-proof">
+          <h3 class="proof-title">Die letzten Beweise</h3>
+          <div class="proof-gallery">
+            <div class="proof-item">
+              <img src="https://via.placeholder.com/80/7AB66E/ffffff?text=Müll1" alt="User upload 1">
+              <span class="proof-user">@user1</span>
+            </div>
+            <div class="proof-item">
+              <img src="https://via.placeholder.com/80/7AB66E/ffffff?text=Müll2" alt="User upload 2">
+              <span class="proof-user">@user2</span>
+            </div>
+            <div class="proof-item">
+              <img src="https://via.placeholder.com/80/7AB66E/ffffff?text=Müll3" alt="User upload 3">
+              <span class="proof-user">@user3</span>
+            </div>
+            <div class="proof-item">
+              <img src="https://via.placeholder.com/80/7AB66E/ffffff?text=Müll4" alt="User upload 4">
+              <span class="proof-user">@user4</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
     </div>
 
     

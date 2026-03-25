@@ -4,7 +4,7 @@ let sidebar = document.getElementById('sidebar')
 let overlay = document.getElementById('overlay')
 let navLinks = document.querySelectorAll('.nav-link')
 let bottomNavLinks = document.querySelectorAll('.bottom-nav-link')
-let sections = document.querySelectorAll('.content-section')
+let sections = document.querySelectorAll('.full-screen')
 
 let toggleMenu = (isOpen) => {
   sidebar.classList.toggle('active', isOpen)
@@ -42,6 +42,12 @@ bottomNavLinks.forEach(link => {
 document.onkeydown = (e) => {
   if (e.key === 'Escape') toggleMenu(false)
 }
+
+// Initialisiere Home-Section als aktiv beim Load
+document.addEventListener('DOMContentLoaded', () => {
+  navigateTo('home')
+})
+
 // Home js
 let homeSection = document.getElementById('home')
 let tasksSection = document.getElementById('tasks')
@@ -442,6 +448,117 @@ if (acceptBtn) {
 if (deniedBtn) {
     deniedBtn.addEventListener('click', denyTask);
 }
+
+/* ===== HERO SECTION JAVASCRIPT ===== */
+
+
+function animateCounter(element, targetValue, duration = 2000) {
+    let currentValue = 0;
+    const increment = targetValue / (duration / 16); // 60fps
+    
+    const timer = setInterval(() => {
+        currentValue += increment;
+        if (currentValue >= targetValue) {
+            currentValue = targetValue;
+            clearInterval(timer);
+        }
+        element.textContent = Math.floor(currentValue);
+    }, 16);
+}
+
+
+document.addEventListener('DOMContentLoaded', () => {
+    const streakCountElement = document.getElementById('streakCount');
+    if (streakCountElement) {
+        animateCounter(streakCountElement, 12, 2000);
+    }
+
+    
+    const globalWasteElement = document.getElementById('globalWaste');
+    if (globalWasteElement) {
+        const initialValue = 2847;
+        animateCounter(globalWasteElement, initialValue, 2500);
+    }
+
+    const activeUsersElement = document.getElementById('activeUsers');
+    if (activeUsersElement) {
+        const initialValue = 1204;
+        animateCounter(activeUsersElement, initialValue, 2500);
+    }
+
+    const startChallengeBtn = document.getElementById('startChallengeBtn');
+    if (startChallengeBtn) {
+        startChallengeBtn.addEventListener('click', () => {
+            console.log('Challenge gestartet!');
+            alert('Challenge "Sammle 0,5kg Müll" wurde gestartet!');
+        });
+    }
+
+    updateTimer();
+    setInterval(updateTimer, 60000);
+
+    observeStatsAnimation();
+});
+
+function updateTimer() {
+    const timerFill = document.querySelector('.timer-fill');
+    const timerTime = document.querySelector('.timer-time');
+    
+    if (timerFill && timerTime) {
+        const now = new Date();
+        const endOfDay = new Date();
+        endOfDay.setHours(23, 59, 59);
+        
+        const timeLeft = endOfDay - now;
+        const hoursLeft = Math.floor(timeLeft / (1000 * 60 * 60));
+        const minutesLeft = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+        
+        const percentageLeft = (timeLeft / (24 * 60 * 60 * 1000)) * 100;
+        timerFill.style.width = percentageLeft + '%';
+        timerTime.textContent = `${hoursLeft}h ${minutesLeft}m verbleibend`;
+    }
+}
+
+function observeStatsAnimation() {
+    const statsCounter = document.querySelector('.stats-counter');
+    
+    if (!statsCounter) return;
+    
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.style.animation = 'slideInUp 0.6s ease-out';
+                observer.unobserve(entry.target);
+            }
+        });
+    }, { threshold: 0.5 });
+    
+    observer.observe(statsCounter);
+}
+
+
+function simulateLiveUpdates() {
+    setInterval(() => {
+        const globalWasteElement = document.getElementById('globalWaste');
+        const activeUsersElement = document.getElementById('activeUsers');
+        
+        if (globalWasteElement && activeUsersElement) {
+            const currentWaste = parseInt(globalWasteElement.textContent);
+            const currentUsers = parseInt(activeUsersElement.textContent);
+            
+            if (Math.random() > 0.5) {
+                globalWasteElement.textContent = currentWaste + Math.floor(Math.random() * 10);
+            }
+            if (Math.random() > 0.7) {
+                activeUsersElement.textContent = currentUsers + Math.floor(Math.random() * 3);
+            }
+        }
+    }, 5000);
+}
+
+
+    deniedBtn.addEventListener('click', denyTask);
+
 
 // Load tasks on page load
 loadTasks();
