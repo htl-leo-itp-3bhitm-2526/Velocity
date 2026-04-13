@@ -96,22 +96,81 @@ function updateActPage(page){
 }
 
 const friendsData = [
-    { name: "Samuel", img: "samuel.png", online: true },
-    { name: "XYZ", img: "xyz.png", online: false }
+    { name: "Samuel", online: true, streak: 18, vibe: "Plastikfrei-Profi", points: 940 },
+    { name: "Lea", online: true, streak: 14, vibe: "Bike Hero", points: 810 },
+    { name: "Noah", online: false, streak: 9, vibe: "Cleanup King", points: 620 },
+    { name: "Mia", online: true, streak: 21, vibe: "Tree Planter", points: 1180 }
 ]
 
 const container = document.getElementById('friends-list-container');
+const actionInfo = document.getElementById('friends-action-info');
+const quickChatButton = document.getElementById('quick-chat-btn');
+const appUsers = [
+    'Lena#308',
+    'Tom#114',
+    'Kira#889',
+    'David#221',
+    'Amir#664',
+    'Nora#450',
+    'Mila#740',
+    'Ben#932'
+];
+let lastQuickChatMatch = '';
+let displayedFriends = [...friendsData];
 
-friendsData.forEach(friend => {
-    const html = `
-        <div class="friend-row ${friend.online ? 'is-online' : ''}" onclick="openChat('${friend.name}')">
-            <div class="friend-avatar" style="background-image: url(${friend.img})"></div>
-            <span class="friend-name">${friend.name}</span>
-            <div class="online-indicator"></div>
-        </div>
-    `
-    container.innerHTML += html;
-})
+const bestStreak = Math.max(...friendsData.map(friend => friend.streak));
+const streakLabel = document.getElementById('dynamic-streak');
+if (streakLabel) {
+    streakLabel.textContent = `DEINE STREAK: ${bestStreak} TAGE`;
+}
+
+function renderFriends(list) {
+    if (!container) return;
+
+    container.innerHTML = '';
+    list.forEach(friend => {
+        const initials = friend.name.slice(0, 2).toUpperCase();
+        const html = `
+            <div class="friend-row ${friend.online ? 'is-online' : ''}" onclick="openChat('${friend.name}')">
+                <div class="friend-avatar">${initials}</div>
+                <div class="friend-meta">
+                    <span class="friend-name">${friend.name}</span>
+                    <span class="friend-vibe">${friend.vibe}</span>
+                </div>
+                <div class="friend-stats">
+                    <span class="friend-points">${friend.points} pts</span>
+                    <span class="friend-streak"><i class="fas fa-fire"></i> ${friend.streak}</span>
+                </div>
+                <div class="online-indicator"></div>
+            </div>
+        `;
+        container.innerHTML += html;
+    });
+}
+
+function updateActionInfo(text) {
+    if (actionInfo) actionInfo.textContent = text;
+}
+
+function getRandomAppUser() {
+    const candidates = appUsers.filter(user => user !== lastQuickChatMatch);
+    const pool = candidates.length > 0 ? candidates : appUsers;
+    const randomIndex = Math.floor(Math.random() * pool.length);
+    return pool[randomIndex];
+}
+
+if (quickChatButton) {
+    quickChatButton.addEventListener('click', () => {
+        const randomUser = getRandomAppUser();
+        lastQuickChatMatch = randomUser;
+
+        quickChatButton.classList.add('active');
+        updateActionInfo(`Schnellchat: Verbunden mit ${randomUser}.`);
+        openChat(randomUser);
+    });
+}
+
+renderFriends(displayedFriends);
 
 // ===== CHAT FUNKTIONALITÄT (LOKAL) =====
 let currentUsername = localStorage.getItem('chatUsername') || 'User' + Math.floor(Math.random() * 1000);
