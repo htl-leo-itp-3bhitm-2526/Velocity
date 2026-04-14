@@ -419,11 +419,11 @@ header{
     overflow-x: hidden;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
-    padding: 2rem 1.5rem 7.5rem 1.5rem;
+    padding: 0;
     scroll-behavior: smooth;
     display: none !important;
     box-sizing: border-box;
-    margin-top: 4.75rem;
+    margin-top: 0;
 }
 
 .full-screen.active {
@@ -454,11 +454,13 @@ header{
 #home {
     font-size: 1.25rem;
     margin-bottom: 0;
+    margin-top: 0;
     scroll-behavior: smooth;
     display: flex;
-    justify-content: center;
-    align-items: flex-start;
-    padding-top: 1rem;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: stretch;
+    padding: 0;
 }
 
 #home.active {
