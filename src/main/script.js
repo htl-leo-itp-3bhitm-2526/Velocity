@@ -1,4 +1,3 @@
-let menuBtn = document.getElementById('menuBtn')
 let closeBtn = document.getElementById('closeBtn')
 let sidebar = document.getElementById('sidebar')
 let overlay = document.getElementById('overlay')
@@ -20,7 +19,7 @@ let navigateTo = (id) => {
   toggleMenu(false)
 }
 
-menuBtn.onclick = () => toggleMenu(true)
+
 closeBtn.onclick = () => toggleMenu(false)
 overlay.onclick = () => toggleMenu(false)
 

@@ -83,25 +83,6 @@ header{
     align-items: center;
 }
 
-
-.menu-btn {
-    background: none;
-    border: none;
-    cursor: pointer;
-    padding: 0.625rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 2rem;
-    color: #6c757d;
-    transition: var(--transition);
-}
-
-.menu-btn:hover {
-    color: var(--primary-color);
-    transform: scale(1.1);
-}
-
 .header-center {
     display: flex;
     align-items: center;
