@@ -1954,46 +1954,97 @@ h1 { color: #4a7c44; font-size: 1.2rem; margin-bottom: 15px; }
 
 .flame-wrapper {
     position: relative;
-    width: 120px;
-    height: 140px;
+    width: 170px;
+    height: 170px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     margin-bottom: 1rem;
+    overflow: visible;
 }
 
-.flame {
+.flame-wrapper::before {
+    content: '';
     position: absolute;
-    bottom: 0;
-    left: 50%;
-    width: 50px;
-    height: 80px;
-    background: linear-gradient(to top, #FF6B35, #FF8C42, #FFA850, transparent);
-    border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
-    transform: translateX(-50%);
-    filter: drop-shadow(0 0 10px rgba(255, 107, 53, 0.4));
-    animation: flicker 3s ease-in-out infinite;
+    inset: 0;
+    border-radius: 50%;
+    background: conic-gradient(from 180deg, var(--flame-glow-1), var(--flame-glow-2), var(--flame-glow-3), var(--flame-glow-4));
+    filter: blur(18px);
+    opacity: 0.85;
+    animation: flameGlow 6s linear infinite;
 }
 
-.flame-2 {
-    width: 40px;
-    height: 70px;
-    background: linear-gradient(to top, #FFA850, #FFD700, #FFEB3B, transparent);
-    animation-duration: 2.5s;
-    animation-delay: 0.3s;
+.flame-wrapper::after {
+    content: '';
+    position: absolute;
+    inset: 18px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255,255,255,0.14), transparent 55%);
 }
 
-.flame-3 {
-    width: 30px;
-    height: 60px;
-    background: linear-gradient(to top, #FFEB3B, #FFFFFF, transparent);
-    animation-duration: 2s;
-    animation-delay: 0.6s;
+.flame-stage {
+    position: relative;
+    width: 128px;
+    height: 128px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    z-index: 1;
 }
 
-@keyframes flicker {
+.flame-stage img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    animation: flameFloat 3.8s ease-in-out infinite;
+    filter: drop-shadow(0 0 25px rgba(255,255,255,0.35));
+}
+
+.streak-flame-container.normal {
+    --flame-glow-1: rgba(255, 185, 80, 0.35);
+    --flame-glow-2: rgba(255, 240, 180, 0.25);
+    --flame-glow-3: rgba(255, 185, 80, 0.20);
+    --flame-glow-4: transparent;
+}
+
+.streak-flame-container.emerald {
+    --flame-glow-1: rgba(84, 225, 168, 0.35);
+    --flame-glow-2: rgba(176, 255, 216, 0.25);
+    --flame-glow-3: rgba(84, 225, 168, 0.20);
+    --flame-glow-4: transparent;
+}
+
+.streak-flame-container.diamond {
+    --flame-glow-1: rgba(146, 230, 255, 0.35);
+    --flame-glow-2: rgba(204, 247, 255, 0.25);
+    --flame-glow-3: rgba(146, 230, 255, 0.20);
+    --flame-glow-4: transparent;
+}
+
+.streak-flame-container.amethyst {
+    --flame-glow-1: rgba(186, 120, 255, 0.35);
+    --flame-glow-2: rgba(220, 190, 255, 0.25);
+    --flame-glow-3: rgba(186, 120, 255, 0.20);
+    --flame-glow-4: transparent;
+}
+
+@keyframes flameGlow {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes flameFloat {
     0%, 100% {
-        transform: translateX(-50%) scaleY(1);
+        transform: translateY(0);
     }
     50% {
-        transform: translateX(-50%) scaleY(1.1);
+        transform: translateY(-6px);
     }
 }
 

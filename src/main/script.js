@@ -42,9 +42,32 @@ document.onkeydown = (e) => {
   if (e.key === 'Escape') toggleMenu(false)
 }
 
+const streakFlameContainer = document.getElementById('streakFlameContainer')
+const streakFlameImg = document.getElementById('streakFlameImg')
+const streakCountEl = document.getElementById('streakCount')
+
+function getFlameStage(count) {
+  if (count >= 100) return 'amethyst'
+  if (count >= 50) return 'diamond'
+  if (count >= 20) return 'emerald'
+  return 'normal'
+}
+
+function updateStreakFlameStage(count) {
+  if (!streakFlameContainer || !streakFlameImg) return
+
+  const stage = getFlameStage(count)
+  streakFlameContainer.classList.remove('normal', 'emerald', 'diamond', 'amethyst')
+  streakFlameContainer.classList.add(stage)
+  streakFlameImg.src = `./img/${stage}.png`
+  streakFlameImg.alt = `${stage} flame`
+}
+
 // Initialisiere Home-Section als aktiv beim Load
 document.addEventListener('DOMContentLoaded', () => {
   navigateTo('home')
+  const initialCount = parseInt(streakCountEl?.textContent || '0', 10)
+  updateStreakFlameStage(initialCount)
 })
 
 // Home js
