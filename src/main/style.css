@@ -2376,8 +2376,8 @@ h1 { color: #4a7c44; font-size: 1.2rem; margin-bottom: 15px; }
         height: 70px;
     }
 }
-    
 
+@media (max-width: 768px) {
     .chat-header-modal {
         padding: 1rem;
         border-radius: 20px 20px 0 0;
@@ -2511,6 +2511,106 @@ h1 { color: #4a7c44; font-size: 1.2rem; margin-bottom: 15px; }
     input:focus {
         outline: none;
     }
+}
+
+@media screen and (max-width: 430px) {
+    #home.full-screen {
+        margin-top: 4rem;
+        min-height: calc(100vh - 4rem - 5.5rem);
+        min-height: calc(100dvh - 4rem - 5.5rem);
+    }
+
+    .full-screen {
+        padding: 0.5rem 0 5.75rem;
+    }
+
+    .full-screen > div {
+        gap: 1rem;
+    }
+
+    .hero-container {
+        padding: 0.75rem 0 1rem;
+        gap: 1rem;
+    }
+
+    .hero-header {
+        margin-top: 0.25rem;
+    }
+
+    .streak-flame-container {
+        margin: 0.75rem 0;
+    }
+
+    .timer-bar-container,
+    .stats-counter,
+    .challenge-card,
+    .social-proof {
+        width: calc(100% - 1.25rem);
+        max-width: calc(100vw - 1.25rem);
+    }
+
+    .challenge-card,
+    .social-proof,
+    .stats-counter,
+    .timer-bar-container {
+        padding: 1rem;
+    }
+
+    .social-proof {
+        margin: 0 auto 1rem auto;
+    }
+
+    #tasks,
+    #friends,
+    #profile {
+        padding-bottom: 6.4rem;
+    }
+
+    .tasks-header {
+        padding: 1.2rem 1rem;
+    }
+
+    .tasks-main-content {
+        padding: 1rem 0.75rem;
+        border-radius: 22px 22px 0 0;
+    }
+
+    .task-group {
+        margin-bottom: 1.1rem;
+    }
+
+    .friends-streak-header {
+        padding: 1.25rem 1rem 1rem;
+        margin-bottom: 0.9rem;
+    }
+
+    .friends-main-card {
+        padding: 1rem 0.9rem;
+    }
+
+    #friends {
+        padding-bottom: 0.75rem;
+    }
+
+    .profile-header-bg {
+        height: 150px;
+        border-radius: 0 0 28px 28px;
+    }
+
+    .profile-card {
+        margin: -40px auto 14px auto;
+    }
+
+    .stats-section,
+    .badges-section {
+        margin: 12px auto;
+        padding: 1.1rem 1rem;
+    }
+
+    .bottom-nav {
+        height: 5.5rem;
+    }
+}
 
 
 /* Small phones (max-width: 375px) */
