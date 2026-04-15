@@ -276,6 +276,94 @@ document.addEventListener('keydown', function(e) {
 });
 // ===== ENDE CHAT FUNKTIONALITÄT =====
 
+// ===== STREAK COUNTER MANAGEMENT =====
+let streakData = JSON.parse(localStorage.getItem('streakData')) || {
+    count: 0,
+    lastUpdated: null,
+    lastUpdateDate: null,
+    completedToday: false
+};
+
+function getToday() {
+    const today = new Date();
+    return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+}
+
+function isSameDay(date1Str, date2Str) {
+    return date1Str === date2Str;
+}
+
+function isPreviousDay(date1Str, date2Str) {
+    const date1 = new Date(date1Str);
+    const date2 = new Date(date2Str);
+    const diffTime = date2 - date1;
+    const diffDays = diffTime / (1000 * 60 * 60 * 24);
+    return diffDays >= 1 && diffDays < 2;
+}
+
+function initializeStreakCounter() {
+    const today = getToday();
+    
+    // Erste Initialisierung oder verfallener Streak
+    if (!streakData.lastUpdateDate) {
+        streakData.count = 0;
+        streakData.lastUpdateDate = today;
+        streakData.completedToday = false;
+        saveStreakData();
+        return;
+    }
+
+    // Prüfe ob Streak verfallen ist (länger als 24h nicht aktualisiert)
+    if (!isSameDay(streakData.lastUpdateDate, today) && !isPreviousDay(streakData.lastUpdateDate, today)) {
+        // Mehr als 24h vergangen - Streak reset
+        streakData.count = 0;
+        streakData.lastUpdateDate = today;
+        streakData.completedToday = false;
+        saveStreakData();
+        return;
+    }
+
+    // Neuer Tag - reset completedToday flag
+    if (!isSameDay(streakData.lastUpdateDate, today)) {
+        streakData.completedToday = false;
+        saveStreakData();
+    }
+}
+
+function saveStreakData() {
+    localStorage.setItem('streakData', JSON.stringify(streakData));
+}
+
+function incrementStreak() {
+    const today = getToday();
+    
+    // Prüfe ob bereits heute erhöht wurde
+    if (streakData.completedToday && isSameDay(streakData.lastUpdateDate, today)) {
+        return false; // Keine Erhöhung, da bereits heute schon erhöht
+    }
+
+    // Erhöhe Counter
+    streakData.count += 1;
+    streakData.lastUpdated = new Date().toISOString();
+    streakData.lastUpdateDate = today;
+    streakData.completedToday = true;
+    
+    saveStreakData();
+    displayStreak();
+    
+    return true; // Counter wurde erhöht
+}
+
+function displayStreak() {
+    const streakCountElement = document.getElementById('streakCount');
+    if (streakCountElement && streakData.count !== parseInt(streakCountElement.textContent, 10)) {
+        streakCountElement.textContent = streakData.count;
+        updateStreakFlameStage(streakData.count);
+    }
+}
+
+// ===== ENDE STREAK COUNTER MANAGEMENT =====
+
 // Task management
 let allTasks = { weekly: [], daily: [] };
 let currentTask = null;
@@ -410,6 +498,13 @@ function acceptTask() {
         
         acceptedTasks.push(taskWithDate);
         localStorage.setItem('acceptedTasks', JSON.stringify(acceptedTasks));
+
+        // Streak Counter erhöhen
+        const streakIncremented = incrementStreak();
+        if (streakIncremented) {
+            // Zeige optional eine Notification wenn Streak erhöht wurde
+            console.log('Streak erhöht! Neuer Stand: ' + streakData.count);
+        }
 
         showTaskDecisionFeedback('accept');
         setTimeout(loadRandomTask, 700);
@@ -549,9 +644,13 @@ function animateCounter(element, targetValue, duration = 2000) {
 
 
 document.addEventListener('DOMContentLoaded', () => {
+    // Streak Counter initialisieren
+    initializeStreakCounter();
+    displayStreak();
+
     const streakCountElement = document.getElementById('streakCount');
     if (streakCountElement) {
-        animateCounter(streakCountElement, 12, 2000);
+        animateCounter(streakCountElement, streakData.count, 2000);
     }
 
     
@@ -668,20 +767,37 @@ document.addEventListener('click', function(e) {
         
         // Save to localStorage
         localStorage.setItem('acceptedTasks', JSON.stringify(acceptedTasks));
+
+        // Streak Counter erhöhen
+        const streakIncremented = incrementStreak();
+        if (streakIncremented) {
+            console.log('Streak erhöht! Neuer Stand: ' + streakData.count);
+        }
         
         // Transform the task card to accepted style
         const taskCard = e.target.closest('.task-card');
         if (taskCard) {
-            taskCard.innerHTML = `
-                <div class="accepted-task-inner">
-                    <div class="accepted-task-icon">
-                        <i class="${taskIcon}"></i>
-                    </div>
-                    <h3 class="accepted-task-title">${taskName}</h3>
-                    <button class="accepted-task-btn">Akzeptiert</button>
-                </div>
-            `;
+            // Add animation class first
             taskCard.classList.add('task-card-accepted');
+            
+            // Animate the button first
+            e.target.style.opacity = '0.7';
+            e.target.style.transform = 'scale(0.95)';
+            
+            // Then transform after brief delay
+            setTimeout(() => {
+                taskCard.innerHTML = `
+                    <div class="accepted-task-inner">
+                        <div class="accepted-task-icon">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <h3 class="accepted-task-title">Aufgabe akzeptiert!</h3>
+                        <button class="accepted-task-btn">
+                            <i class="fas fa-star"></i> +Streak
+                        </button>
+                    </div>
+                `;
+            }, 100);
         }
     }
 });
