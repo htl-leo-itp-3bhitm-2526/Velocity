@@ -737,18 +737,16 @@ function simulateLiveUpdates() {
 }
 
 
-    deniedBtn.addEventListener('click', denyTask);
-
-
 // Load tasks on page load
 loadTasks();
 setupTaskSwipe();
 
 // Handle task accept buttons
 document.addEventListener('click', function(e) {
-    if (e.target.classList.contains('task-accept-btn')) {
-        const taskName = e.target.getAttribute('data-task');
-        const taskIcon = e.target.getAttribute('data-icon');
+    const btn = e.target.closest('.task-accept-btn');
+    if (btn) {
+        const taskName = btn.getAttribute('data-task');
+        const taskIcon = btn.getAttribute('data-icon');
         
         // Create task object
         const task = {
@@ -775,14 +773,14 @@ document.addEventListener('click', function(e) {
         }
         
         // Transform the task card to accepted style
-        const taskCard = e.target.closest('.task-card');
+        const taskCard = btn.closest('.task-card');
         if (taskCard) {
             // Add animation class first
             taskCard.classList.add('task-card-accepted');
             
             // Animate the button first
-            e.target.style.opacity = '0.7';
-            e.target.style.transform = 'scale(0.95)';
+            btn.style.opacity = '0.7';
+            btn.style.transform = 'scale(0.95)';
             
             // Then transform after brief delay
             setTimeout(() => {
