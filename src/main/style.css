@@ -487,6 +487,7 @@ header{
     overflow-y: auto;
     overflow-x: hidden;
     -webkit-overflow-scrolling: touch;
+    padding-top: 20px;
 }
 
 #tasks.active,

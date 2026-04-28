@@ -77,12 +77,32 @@ let friendsSection = document.getElementById('friends')
 let profileSection = document.getElementById('profile')
 
 function updateActPage(page){ 
+  const appHeader = document.getElementById('appHeader');
+  
   switch(page){
     case 'home':
       friendsSection.style.display = 'none'; 
       profileSection.style.display = 'none';     
       tasksSection.style.display = 'none';
       homeSection.style.display = 'flex';
+      appHeader.innerHTML = `
+        <div class="header-content">
+            <div class="header-left">
+                <button class="icon-btn settings-btn" title="Einstellungen">
+                    <i class="fas fa-cog settings-icon"></i>
+                </button>
+            </div>
+            <div class="header-center">
+                <img src="../main/img/logo.png" alt="Leaf Logo" class="logo-image">
+            </div>
+            <div class="header-right">
+                <button class="icon-btn notification-btn" title="Benachrichtigungen">
+                    <i class="fas fa-bell-slash notification-icon"></i>
+                </button>
+            </div>
+        </div>
+        <div class="bottom-bar"></div>
+      `;
       break;
       
       case 'tasks':
@@ -90,29 +110,22 @@ function updateActPage(page){
        friendsSection.style.display = 'none';
        profileSection.style.display = 'none';
        tasksSection.style.display = 'block';
+       appHeader.innerHTML = '';
       break;
       case 'friends':
        homeSection.style.display = 'none';
       profileSection.style.display = 'none';
       tasksSection.style.display = 'none';
       friendsSection.style.display = 'block';
+      appHeader.innerHTML = '';
       break;
       case 'profile':
        homeSection.style.display = 'none';
         friendsSection.style.display = 'none';
         tasksSection.style.display = 'none';
         profileSection.style.display='block';
+        appHeader.innerHTML = '';
       break;
-
-      case 'profile':
-    homeSection.style.display = 'none';
-    friendsSection.style.display = 'none';
-    tasksSection.style.display = 'none';
-    profileSection.style.display = 'block';
-
-    const user = JSON.parse(localStorage.getItem('ecoUser'));
-    if (user) renderProfile(user);
-    break;
   }
  
 }
