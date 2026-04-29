@@ -2344,6 +2344,72 @@ h1 { color: #4a7c44; font-size: 1.2rem; margin-bottom: 15px; }
     margin-top: 0.5rem;
 }
 
+.today-challenges-panel {
+    width: calc(100% - 3rem);
+    max-width: calc(100vw - 3rem);
+    margin: 0 auto 1.25rem auto;
+}
+
+.today-challenges-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.today-challenge-card {
+    width: 100%;
+    margin: 0;
+    border-radius: 22px;
+    padding: 1.6rem;
+}
+
+.today-challenge-accepted-btn {
+    opacity: 1;
+    cursor: default;
+    filter: saturate(0.9);
+}
+
+.today-challenge-accepted-btn:disabled {
+    color: #ffffff;
+}
+
+.today-challenge-upload-btn {
+    background: linear-gradient(135deg, #6f7f8e, #4f5f70);
+    box-shadow: 0 4px 15px rgba(79, 95, 112, 0.28);
+}
+
+.today-challenge-upload-btn:hover {
+    box-shadow: 0 6px 22px rgba(79, 95, 112, 0.35);
+}
+
+.today-challenge-upload-input {
+    display: none;
+}
+
+.today-proof-state {
+    margin: 0.25rem 0 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.88rem;
+    color: #607d64;
+    font-weight: 600;
+}
+
+.today-proof-state.uploaded {
+    color: #2f7a42;
+}
+
+.today-challenges-empty {
+    margin: 0;
+    padding: 1rem 1.1rem;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.75);
+    border: 1px solid rgba(122, 182, 110, 0.25);
+    color: #5f7b63;
+    font-weight: 600;
+}
+
 /* SOCIAL PROOF - LETZTE UPLOADS */
 .social-proof {
     width: calc(100% - 3rem);
