@@ -450,6 +450,10 @@ function renderTodayChallenges() {
         const uploadState = task.proofFileName
             ? `<p class="today-proof-state uploaded"><i class="fas fa-check-circle"></i> Beweis hochgeladen: ${escapeHtmlText(task.proofFileName)}</p>`
             : '<p class="today-proof-state"><i class="fas fa-image"></i> Noch kein Beweis hochgeladen</p>';
+        
+        const proofImage = task.proofFileData 
+            ? `<div class="today-proof-image-container"><img src="${task.proofFileData}" alt="Beweis-Foto" class="today-proof-image"></div>`
+            : '';
 
         return `
         <div class="today-challenge-card glassmorphism">
@@ -473,6 +477,8 @@ function renderTodayChallenges() {
                 </div>
             </div>
 
+            ${proofImage}
+
             <button class="btn-primary btn-challenge today-challenge-accepted-btn" type="button" disabled>
                 <i class="fas fa-check"></i> Akzeptiert
             </button>
@@ -487,11 +493,12 @@ function renderTodayChallenges() {
     }).join('');
 }
 
-function saveProofUpload(challengeKey, fileName) {
+function saveProofUpload(challengeKey, fileName, fileData) {
     const taskIndex = acceptedTasks.findIndex(task => getAcceptedTaskKey(task) === challengeKey);
     if (taskIndex === -1) return;
 
     acceptedTasks[taskIndex].proofFileName = fileName;
+    acceptedTasks[taskIndex].proofFileData = fileData; // Speichere die Bilddaten als Data URL
     acceptedTasks[taskIndex].proofUploadedAt = new Date().toISOString();
     saveAcceptedTasks();
 }
@@ -911,8 +918,15 @@ document.addEventListener('change', function(e) {
     if (!file) return;
 
     const challengeKey = uploadInput.getAttribute('data-challenge-key') || '';
-    saveProofUpload(challengeKey, file.name);
-    renderTodayChallenges();
+    
+    // Bild als Data URL lesen für Vorschau
+    const reader = new FileReader();
+    reader.onload = function(event) {
+        const fileData = event.target.result; // Data URL des Bildes
+        saveProofUpload(challengeKey, file.name, fileData);
+        renderTodayChallenges();
+    };
+    reader.readAsDataURL(file);
 });
 
 function handleCredentialResponse(response) {

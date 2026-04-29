@@ -2400,6 +2400,22 @@ h1 { color: #4a7c44; font-size: 1.2rem; margin-bottom: 15px; }
     color: #2f7a42;
 }
 
+.today-proof-image-container {
+    margin: 1rem 0;
+    border-radius: 12px;
+    overflow: hidden;
+    background: rgba(0, 0, 0, 0.05);
+    border: 2px solid rgba(122, 182, 110, 0.3);
+}
+
+.today-proof-image {
+    width: 100%;
+    height: auto;
+    max-height: 200px;
+    object-fit: cover;
+    display: block;
+}
+
 .today-challenges-empty {
     margin: 0;
     padding: 1rem 1.1rem;
