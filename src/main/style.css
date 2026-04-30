@@ -925,6 +925,39 @@ h1 { color: #4a7c44; font-size: 1.2rem; margin-bottom: 15px; }
     font-weight: 700;
 }
 
+.friend-actions {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 120px;
+}
+
+.add-friend-btn,
+.friend-badge {
+    border: none;
+    background: #7AB66E;
+    color: white;
+    border-radius: 999px;
+    padding: 0.5rem 0.9rem;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.add-friend-btn[disabled] {
+    background: #c1d7c4;
+    cursor: not-allowed;
+}
+
+.add-friend-btn:hover:not([disabled]) {
+    background: #6a9e5a;
+}
+
+.friend-badge {
+    background: #4a7c44;
+    cursor: default;
+}
+
 .dm-item {
     position: relative;
     width: 100%;

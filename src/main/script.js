@@ -130,13 +130,14 @@ function updateActPage(page){
  
 }
 
-const friendsData = [
-    { name: "Samuel", online: true, streak: 18, vibe: "Plastikfrei-Profi", points: 940 },
-    { name: "Lea", online: true, streak: 14, vibe: "Bike Hero", points: 810 },
-    { name: "Noah", online: false, streak: 9, vibe: "Cleanup King", points: 620 },
-    { name: "Mia", online: true, streak: 21, vibe: "Tree Planter", points: 1180 }
-]
+const googleUsers = [
+    { name: "Samuel", email: "samuel@google.com", online: true, streak: 18, vibe: "Plastikfrei-Profi", points: 940 },
+    { name: "Lea", email: "lea@google.com", online: true, streak: 14, vibe: "Bike Hero", points: 810 },
+    { name: "Noah", email: "noah@google.com", online: false, streak: 9, vibe: "Cleanup King", points: 620 },
+    { name: "Mia", email: "mia@google.com", online: true, streak: 21, vibe: "Tree Planter", points: 1180 }
+];
 
+const FRIENDS_STORAGE_KEY = 'googleFriends';
 const container = document.getElementById('friends-list-container');
 const actionInfo = document.getElementById('friends-action-info');
 const quickChatButton = document.getElementById('quick-chat-btn');
@@ -151,9 +152,74 @@ const appUsers = [
     'Ben#932'
 ];
 let lastQuickChatMatch = '';
-let displayedFriends = [...friendsData];
+let displayedFriends = [];
 
-const bestStreak = Math.max(...friendsData.map(friend => friend.streak));
+function getSavedGoogleFriends() {
+    return JSON.parse(localStorage.getItem(FRIENDS_STORAGE_KEY)) || [];
+}
+
+function saveGoogleFriends(friends) {
+    localStorage.setItem(FRIENDS_STORAGE_KEY, JSON.stringify(friends));
+}
+
+function getLoggedInUser() {
+    const savedUser = localStorage.getItem('ecoUser');
+    return savedUser ? JSON.parse(savedUser) : null;
+}
+
+function isGoogleLoggedIn() {
+    return !!getLoggedInUser();
+}
+
+function getAvailableGoogleUsers() {
+    const savedFriends = getSavedGoogleFriends();
+    return googleUsers.map(user => ({
+        ...user,
+        isFriend: savedFriends.some(friend => friend.email === user.email)
+    }));
+}
+
+function addGoogleFriend(email) {
+    if (!isGoogleLoggedIn()) {
+        updateActionInfo('Bitte melde dich zuerst mit Google an, um Freunde hinzuzufügen.');
+        return;
+    }
+
+    const savedFriends = getSavedGoogleFriends();
+    const user = googleUsers.find(user => user.email === email);
+    if (!user) return;
+
+    if (savedFriends.some(friend => friend.email === email)) {
+        updateActionInfo(`${user.name} ist bereits Freund.`);
+        return;
+    }
+
+    savedFriends.push(user);
+    saveGoogleFriends(savedFriends);
+    updateActionInfo(`${user.name} wurde als Freund hinzugefügt.`);
+    loadFriends();
+}
+
+function loadFriends() {
+    displayedFriends = getAvailableGoogleUsers();
+    renderFriends(displayedFriends);
+    if (!isGoogleLoggedIn()) {
+        updateActionInfo('Melde dich mit Google an, um anderen Google-Nutzern zu schreiben.');
+    } else {
+        updateActionInfo('Wähle einen Kontakt, um mit einem Google-Nutzer zu chatten.');
+    }
+}
+
+function getCurrentChatUsername() {
+    const user = getLoggedInUser();
+    return user ? user.email || user.name : localStorage.getItem('chatUsername');
+}
+
+function findGoogleUserByName(name) {
+    return getAvailableGoogleUsers().find(user => user.name === name);
+}
+
+const bestStreak = Math.max(...googleUsers.map(friend => friend.streak));
 const streakLabel = document.getElementById('dynamic-streak');
 if (streakLabel) {
     streakLabel.textContent = `DEINE STREAK: ${bestStreak} TAGE`;
@@ -162,11 +228,17 @@ if (streakLabel) {
 function renderFriends(list) {
     if (!container) return;
 
+    const loggedIn = isGoogleLoggedIn();
     container.innerHTML = '';
     list.forEach(friend => {
         const initials = friend.name.slice(0, 2).toUpperCase();
+        const isFriend = !!friend.isFriend;
+        const actionButton = isFriend
+            ? '<span class="friend-badge">Freund</span>'
+            : `<button class="add-friend-btn" data-friend-email="${friend.email}" ${loggedIn ? '' : 'disabled'}>Freund hinzufügen</button>`;
+
         const html = `
-            <div class="friend-row ${friend.online ? 'is-online' : ''}" onclick="openChat('${friend.name}')">
+            <div class="friend-row ${friend.online ? 'is-online' : ''}" data-friend-name="${friend.name}">
                 <div class="friend-avatar">${initials}</div>
                 <div class="friend-meta">
                     <span class="friend-name">${friend.name}</span>
@@ -175,6 +247,9 @@ function renderFriends(list) {
                 <div class="friend-stats">
                     <span class="friend-points">${friend.points} pts</span>
                     <span class="friend-streak"><i class="fas fa-fire"></i> ${friend.streak}</span>
+                </div>
+                <div class="friend-actions">
+                    ${actionButton}
                 </div>
                 <div class="online-indicator"></div>
             </div>
@@ -196,6 +271,11 @@ function getRandomAppUser() {
 
 if (quickChatButton) {
     quickChatButton.addEventListener('click', () => {
+        if (!isGoogleLoggedIn()) {
+            updateActionInfo('Bitte melde dich mit Google an, um den Schnellchat zu nutzen.');
+            return;
+        }
+
         const randomUser = getRandomAppUser();
         lastQuickChatMatch = randomUser;
 
@@ -205,16 +285,43 @@ if (quickChatButton) {
     });
 }
 
-renderFriends(displayedFriends);
+loadFriends();
+
+if (container) {
+    container.addEventListener('click', (event) => {
+        const friendButton = event.target.closest('.add-friend-btn');
+        if (friendButton) {
+            const email = friendButton.dataset.friendEmail;
+            addGoogleFriend(email);
+            event.stopPropagation();
+            return;
+        }
+
+        const row = event.target.closest('.friend-row');
+        if (row) {
+            const friendName = row.dataset.friendName;
+            if (!isGoogleLoggedIn()) {
+                updateActionInfo('Bitte melde dich mit Google an, um Nachrichten zu senden.');
+                return;
+            }
+            openChat(friendName);
+        }
+    });
+}
 
 // ===== CHAT FUNKTIONALITÄT (LOKAL) =====
-let currentUsername = localStorage.getItem('chatUsername') || 'User' + Math.floor(Math.random() * 1000);
+let currentUsername = getCurrentChatUsername() || 'User' + Math.floor(Math.random() * 1000);
 localStorage.setItem('chatUsername', currentUsername);
 let currentChatFriend = null;
 let chatMessages = JSON.parse(localStorage.getItem('chatMessages')) || {};
 
 
 function openChat(friendName) {
+    if (!isGoogleLoggedIn()) {
+        updateActionInfo('Bitte melde dich mit Google an, um Nachrichten zu senden.');
+        return;
+    }
+
     currentChatFriend = friendName;
     document.getElementById('chat-friend-name').textContent = friendName;
     document.getElementById('chat-modal').style.display = 'flex';
@@ -923,25 +1030,17 @@ function simulateLiveUpdates() {
 
 // Google send -- WEBHOOK
 async function sendToGoogleSheets(msgObj) {
-    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxiib5KO8jUV9Ok2mYWkN_UqPe7pjibCAjcO12L8p2AGknv0YhUQshO7sXgBGP4kLn5xg/exec";
-    
-    await fetch(WEB_APP_URL, {
-        method: "POST",
-        mode: "no-cors", // Wichtig für Google Apps Script
-        cache: "no-cache",
-        body: JSON.stringify(msgObj)
-    });
+    try {
+        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxiib5KO8jUV9Ok2mYWkN_UqPe7pjibCAjcO12L8p2AGknv0YhUQshO7sXgBGP4kLn5xg/exec";
+        await fetch(WEB_APP_URL, {
+            method: "POST",
+            mode: "no-cors",
+            body: JSON.stringify(msgObj)
+        });
+    } catch (error) {
+        console.error("Google Sheets Fehler:", error);
+    }
 }
-
-// In deiner sendChatMessage() Funktion aufrufen:
-const msgObj = {
-    sender: JSON.parse(localStorage.getItem('ecoUser')).email, // Google Email als ID
-    receiver: currentChatFriend,
-    text: message,
-    type: "text"
-};
-sendToGoogleSheets(msgObj);
-
 
 // Load tasks on page load
 loadTasks();
