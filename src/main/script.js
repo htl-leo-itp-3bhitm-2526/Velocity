@@ -513,57 +513,87 @@ async function loadTasks() {
     try {
         const response = await fetch('../../assets/tasks.json');
         allTasks = await response.json();
-        loadRandomTask();
+        loadDailyTask(); // Tägliche Challenge laden
         syncAcceptedTasksToUI();
     } catch (error) {
         console.error('Fehler beim Laden der Tasks:', error);
     }
 }
 
-// Get random task
-function getRandomTask() {
-    const weeklyTasks = allTasks.weekly || [];
-    if (weeklyTasks.length === 0) return null;
+// Get daily task based on date (changes every day)
+function getDailyTask() {
+    const dailyTasks = allTasks.daily || [];
+    if (dailyTasks.length === 0) return null;
 
-    if (!currentTask || weeklyTasks.length === 1) {
-        const randomIndex = Math.floor(Math.random() * weeklyTasks.length);
-        return weeklyTasks[randomIndex];
-    }
-
-    let nextTask = currentTask;
-    let safetyCounter = 0;
-
-    while (nextTask?.task === currentTask?.task && safetyCounter < 10) {
-        const randomIndex = Math.floor(Math.random() * weeklyTasks.length);
-        nextTask = weeklyTasks[randomIndex];
-        safetyCounter += 1;
-    }
-
-    return nextTask;
-}
-
-// Load and display random task
-function loadRandomTask() {
-    currentTask = getRandomTask();
-    if (currentTask) {
-        displayTask(currentTask);
-    }
-}
-
-// Display task in home section
-function displayTask(task) {
-    const homeContent = document.querySelector('.home-content h1');
-    const taskText = document.querySelector('.home-content p');
-    const taskImage = document.getElementById('template_img');
+    // Verwende das Datum als Seed für konsistente tägliche Auswahl
+    const today = new Date();
+    const dateString = `${today.getFullYear()}-${today.getMonth()}-${today.getDate()}`;
+    const hash = hashCode(dateString);
+    const index = Math.abs(hash) % dailyTasks.length;
     
-    if (homeContent) {
-        homeContent.textContent = 'Deine neue Aufgabe!';
+    return dailyTasks[index];
+}
+
+// Einfache Hash-Funktion für konsistente Tagesauswahl
+function hashCode(str) {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+        const char = str.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash = hash & hash;
     }
-    if (taskText) {
-        taskText.textContent = task.task.toUpperCase();
+    return hash;
+}
+
+// Load and display daily task
+function loadDailyTask() {
+    const dailyTask = getDailyTask();
+    if (!dailyTask) return;
+
+    // Prüfen ob heute schon eine Challenge gestartet wurde
+    const todayKey = getTodayKey();
+    const lastDailyChallenge = localStorage.getItem('ecoLastDailyChallengeDate');
+    
+    if (lastDailyChallenge !== todayKey) {
+        // Neuer Tag - neue Challenge anzeigen
+        displayDailyChallenge(dailyTask);
+    } else {
+        // Gleicher Tag - prüfen ob bereits akzeptiert
+        const existingTask = acceptedTasks.find(t => t.isDaily && t.acceptedDate.startsWith(todayKey));
+        if (existingTask) {
+            displayDailyChallenge(existingTask, true);
+        } else {
+            displayDailyChallenge(dailyTask);
+        }
     }
-    if (taskImage) {
-        taskImage.alt = task.task;
+}
+
+function getTodayKey() {
+    const today = new Date();
+    return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+}
+
+// Display daily challenge in the card
+function displayDailyChallenge(task, isAccepted = false) {
+    const titleEl = document.getElementById('dailyChallengeTitle');
+    const descEl = document.getElementById('dailyChallengeDesc');
+    const iconEl = document.getElementById('dailyChallengeIcon');
+    const btnEl = document.getElementById('startChallengeBtn');
+
+    if (titleEl) titleEl.textContent = task.task;
+    if (descEl) descEl.textContent = "Erledige diese tägliche Aufgabe und verdiene dir Punkte!";
+    if (iconEl && task.icon) iconEl.className = task.icon;
+
+    if (btnEl) {
+        if (isAccepted) {
+            btnEl.innerHTML = '<i class="fas fa-check"></i> Akzeptiert';
+            btnEl.disabled = true;
+            btnEl.classList.add('accepted');
+        } else {
+            btnEl.innerHTML = '<i class="fas fa-arrow-right"></i> Challenge starten';
+            btnEl.disabled = false;
+            btnEl.classList.remove('accepted');
+        }
     }
 }
 
@@ -795,8 +825,36 @@ document.addEventListener('DOMContentLoaded', () => {
     const startChallengeBtn = document.getElementById('startChallengeBtn');
     if (startChallengeBtn) {
         startChallengeBtn.addEventListener('click', () => {
-            console.log('Challenge gestartet!');
-            alert('Challenge "Sammle 0,5kg Müll" wurde gestartet!');
+            const dailyTask = getDailyTask();
+            if (!dailyTask) return;
+
+            const todayKey = getTodayKey();
+            
+            // Prüfen ob heute schon akzeptiert
+            const alreadyAccepted = acceptedTasks.some(t => t.isDaily && t.acceptedDate && t.acceptedDate.startsWith(todayKey));
+            if (alreadyAccepted) return;
+
+            // Task zur acceptedTasks hinzufügen
+            const task = {
+                id: Date.now(),
+                task: dailyTask.task,
+                icon: dailyTask.icon,
+                acceptedDate: new Date().toISOString(),
+                status: 'accepted',
+                isDaily: true // Markierung für tägliche Challenge
+            };
+            
+            acceptedTasks.push(task);
+            saveAcceptedTasks();
+            
+            // Speichern dass heute eine Challenge gestartet wurde
+            localStorage.setItem('ecoLastDailyChallengeDate', todayKey);
+            
+            // UI aktualisieren
+            displayDailyChallenge(dailyTask, true);
+            renderTodayChallenges();
+            
+            console.log('Tägliche Challenge gestartet:', dailyTask.task);
         });
     }
 
