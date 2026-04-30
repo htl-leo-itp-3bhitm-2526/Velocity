@@ -921,6 +921,28 @@ function simulateLiveUpdates() {
 }
 
 
+// Google send -- WEBHOOK
+async function sendToGoogleSheets(msgObj) {
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxiib5KO8jUV9Ok2mYWkN_UqPe7pjibCAjcO12L8p2AGknv0YhUQshO7sXgBGP4kLn5xg/exec";
+    
+    await fetch(WEB_APP_URL, {
+        method: "POST",
+        mode: "no-cors", // Wichtig für Google Apps Script
+        cache: "no-cache",
+        body: JSON.stringify(msgObj)
+    });
+}
+
+// In deiner sendChatMessage() Funktion aufrufen:
+const msgObj = {
+    sender: JSON.parse(localStorage.getItem('ecoUser')).email, // Google Email als ID
+    receiver: currentChatFriend,
+    text: message,
+    type: "text"
+};
+sendToGoogleSheets(msgObj);
+
+
 // Load tasks on page load
 loadTasks();
 setupTaskSwipe();
