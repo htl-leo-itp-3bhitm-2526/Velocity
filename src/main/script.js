@@ -366,23 +366,63 @@ async function loadMessagesFromGoogle() {
     }
 }
 
-function openChat(friendName) {
-    if (!isGoogleLoggedIn()) {
-        updateActionInfo('Bitte melde dich mit Google an.');
-        return;
-    }
+function handleCredentialResponse(response) {
+    let data = JSON.parse(atob(response.credential.split('.')[1]));
+    let userObj = { name: data.name, email: data.email, picture: data.picture, isLoggedIn: true };
+    localStorage.setItem('ecoUser', JSON.stringify(userObj));
+    
+    // An Google Sheets melden
+    fetch(WEB_APP_URL, {
+        method: "POST",
+        mode: "no-cors",
+        body: JSON.stringify({
+            action: "register",
+            name: data.name,
+            email: data.email,
+            picture: data.picture
+        })
+    });
 
-    currentChatFriend = friendName;
-    document.getElementById('chat-friend-name').textContent = friendName;
+    renderProfile(userObj);
+}
+
+function addUserBySearch() {
+    const input = document.getElementById('friend-search-input');
+    const email = input.value.trim().toLowerCase();
+    if (!email) return;
+
+    const savedFriends = getSavedGoogleFriends();
+    if (savedFriends.some(f => f.email === email)) return alert("Schon in der Liste!");
+
+    const newFriend = {
+        name: email.split('@')[0],
+        email: email,
+        online: false,
+        streak: 0,
+        vibe: "Neu hinzugefügt",
+        points: 0,
+        isFriend: true
+    };
+
+    savedFriends.push(newFriend);
+    saveGoogleFriends(savedFriends);
+    loadFriends();
+    input.value = '';
+}
+
+
+function openChat(friendEmail) {
+    if (!isGoogleLoggedIn()) return;
+
+    currentChatFriend = friendEmail; // Nutze die Email für die Datenbank-Abfrage
+    document.getElementById('chat-friend-name').textContent = friendEmail;
     document.getElementById('chat-modal').style.display = 'flex';
-    document.getElementById('chat-messages').innerHTML = '';
-    document.getElementById('chat-message-input').focus();
+    document.getElementById('chat-messages').innerHTML = 'Lade...';
 
     loadMessagesFromGoogle();
-
     if (chatRefreshInterval) clearInterval(chatRefreshInterval);
     chatRefreshInterval = setInterval(loadMessagesFromGoogle, 3000);
-    }
+}
     
 
 function closeChatModal() {
