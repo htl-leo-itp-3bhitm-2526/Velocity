@@ -4,6 +4,8 @@ let overlay = document.getElementById('overlay')
 let navLinks = document.querySelectorAll('.nav-link')
 let bottomNavLinks = document.querySelectorAll('.bottom-nav-link')
 let sections = document.querySelectorAll('.full-screen')
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxiib5KO8jUV9Ok2mYWkN_UqPe7pjibCAjcO12L8p2AGknv0YhUQshO7sXgBGP4kLn5xg/exec";
+let chatRefreshInterval = null;
 
 let toggleMenu = (isOpen) => {
   sidebar.classList.toggle('active', isOpen)
@@ -343,9 +345,30 @@ let currentChatFriend = null;
 let chatMessages = JSON.parse(localStorage.getItem('chatMessages')) || {};
 
 
+async function loadMessagesFromGoogle() {
+    const ecoUser = JSON.parse(localStorage.getItem('ecoUser'));
+    if (!currentChatFriend || !ecoUser) return;
+
+    const url = `${WEB_APP_URL}?email=${encodeURIComponent(ecoUser.email)}&friend=${encodeURIComponent(currentChatFriend)}`;
+    
+    try {
+        const response = await fetch(url);
+        const remoteMessages = await response.json();
+        const messagesContainer = document.getElementById('chat-messages');
+        
+        messagesContainer.innerHTML = ''; 
+        remoteMessages.forEach(msg => {
+            const isOwn = (msg.sender === ecoUser.email);
+            addMessageToChat(msg.text, isOwn);
+        });
+    } catch (e) {
+        console.error(e);
+    }
+}
+
 function openChat(friendName) {
     if (!isGoogleLoggedIn()) {
-        updateActionInfo('Bitte melde dich mit Google an, um Nachrichten zu senden.');
+        updateActionInfo('Bitte melde dich mit Google an.');
         return;
     }
 
@@ -355,40 +378,38 @@ function openChat(friendName) {
     document.getElementById('chat-messages').innerHTML = '';
     document.getElementById('chat-message-input').focus();
 
-  
-    const savedMessages = JSON.parse(localStorage.getItem('chatMessages')) || {};
-    if (savedMessages[friendName]) {
-        savedMessages[friendName].forEach(msg => {
-            addMessageToChat(msg.text, msg.own, msg.user);
-        });
+    loadMessagesFromGoogle();
+
+    if (chatRefreshInterval) clearInterval(chatRefreshInterval);
+    chatRefreshInterval = setInterval(loadMessagesFromGoogle, 3000);
     }
-}
+    
 
 function closeChatModal() {
     document.getElementById('chat-modal').style.display = 'none';
     currentChatFriend = null;
+    if (chatRefreshInterval) {
+        clearInterval(chatRefreshInterval);
+        chatRefreshInterval = null;
+    }
 }
 
 function sendChatMessage() {
     const input = document.getElementById('chat-message-input');
     const message = input.value.trim();
+    const ecoUser = JSON.parse(localStorage.getItem('ecoUser'));
 
-    if (!message || !currentChatFriend) return;
+    if (!message || !currentChatFriend || !ecoUser) return;
 
-    if (!chatMessages[currentChatFriend]) {
-        chatMessages[currentChatFriend] = [];
-    }
-
-    chatMessages[currentChatFriend].push({
+    const msgObj = {
+        sender: ecoUser.email,
+        receiver: currentChatFriend,
         text: message,
-        own: true,
-        user: currentUsername,
-        timestamp: new Date().toISOString()
-    });
+        type: "text"
+    };
 
-    localStorage.setItem('chatMessages', JSON.stringify(chatMessages));
-
-    addMessageToChat(message, true, currentUsername);
+    addMessageToChat(message, true);
+    sendToGoogleSheets(msgObj);
 
     input.value = '';
     input.focus();
@@ -1103,14 +1124,13 @@ function simulateLiveUpdates() {
 // Google send -- WEBHOOK
 async function sendToGoogleSheets(msgObj) {
     try {
-        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxiib5KO8jUV9Ok2mYWkN_UqPe7pjibCAjcO12L8p2AGknv0YhUQshO7sXgBGP4kLn5xg/exec";
         await fetch(WEB_APP_URL, {
             method: "POST",
             mode: "no-cors",
             body: JSON.stringify(msgObj)
         });
     } catch (error) {
-        console.error("Google Sheets Fehler:", error);
+        console.error(error);
     }
 }
 
