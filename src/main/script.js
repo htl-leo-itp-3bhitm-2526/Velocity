@@ -63,6 +63,33 @@ function updateStreakFlameStage(count) {
   streakFlameImg.alt = `${stage} flame`
 }
 
+// Dark Mode Management
+function setDarkMode(enabled) {
+  document.body.classList.toggle('dark-mode', enabled);
+  const darkModeIcon = document.getElementById('darkModeIcon');
+  if (darkModeIcon) {
+    darkModeIcon.className = enabled ? 'fas fa-sun' : 'fas fa-moon';
+  }
+  localStorage.setItem('ecoDarkMode', enabled ? '1' : '0');
+  const themeMeta = document.querySelector('meta[name="theme-color"]');
+  if (themeMeta) {
+    themeMeta.setAttribute('content', enabled ? '#121212' : '#7AB66E');
+  }
+}
+
+function initializeDarkMode(enabled) {
+  setDarkMode(enabled);
+}
+
+// Event delegation für Dark Mode Toggle
+document.addEventListener('click', (e) => {
+  const darkModeBtn = e.target.closest('.dark-mode-toggle');
+  if (darkModeBtn) {
+    const enabled = !document.body.classList.contains('dark-mode');
+    setDarkMode(enabled);
+  }
+});
+
 // Initialisiere Home-Section als aktiv beim Load
 document.addEventListener('DOMContentLoaded', () => {
   navigateTo('home')
@@ -88,8 +115,8 @@ function updateActPage(page){
       appHeader.innerHTML = `
         <div class="header-content">
             <div class="header-left">
-                <button class="icon-btn settings-btn" title="Einstellungen">
-                    <i class="fas fa-cog settings-icon"></i>
+                <button class="icon-btn dark-mode-toggle" id="darkModeToggle" title="Dark Mode">
+                    <i class="fas fa-moon" id="darkModeIcon"></i>
                 </button>
             </div>
             <div class="header-center">
@@ -1011,6 +1038,9 @@ document.addEventListener('DOMContentLoaded', () => {
     setInterval(updateTimer, 60000);
 
     observeStatsAnimation();
+
+    const savedDarkMode = localStorage.getItem('ecoDarkMode') === '1';
+    initializeDarkMode(savedDarkMode);
 });
 
 function updateTimer() {

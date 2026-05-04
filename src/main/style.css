@@ -3,7 +3,11 @@
     --secondary-color: #E6F4DB;
     --standOut-color: #498756;
     --background-color: #F6F6F6;
+    --header-background: #ffffff;
+    --card-background: #f1f8f0;
+    --surface-background: rgba(255, 255, 255, 0.7);
     --text-color: #333;
+    --muted-text: #666;
     --light-gray: #e9ecef;
     --shadow: 0 0.125rem 0.5rem rgba(0, 0, 0, 0.1);
     --transition: all 0.3s ease;
@@ -13,6 +17,21 @@
     --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
     --safe-area-inset-left: env(safe-area-inset-left, 0px);
     --safe-area-inset-right: env(safe-area-inset-right, 0px);
+}
+
+/* Dark mode CSS variables */
+body.dark-mode {
+    --primary-color: #8cd08a;
+    --secondary-color: #2a2a2a;
+    --standOut-color: #6bab66;
+    --background-color: #050505;
+    --header-background: #111111;
+    --card-background: rgba(18, 18, 18, 0.95);
+    --surface-background: rgba(18, 18, 18, 0.95);
+    --text-color: #e5e5e5;
+    --muted-text: #b8b8b8;
+    --light-gray: #2a2a2a;
+    --shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
 }
 
 html, body {
@@ -58,7 +77,7 @@ header{
     width: 100%;
     height: 4.75rem;
     width: 100%;
-    background-color: #ffffff;
+    background-color: var(--header-background);
     box-shadow: var(--shadow);
     position: relative;
     z-index: 100;
@@ -134,10 +153,430 @@ header{
     color: inherit;
 }
 
+.dark-mode-toggle {
+    width: 3rem;
+    height: 3rem;
+    border-radius: 18px;
+    background-color: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    color: #333;
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
+    transition: var(--transition);
+}
+
+.dark-mode-toggle:hover {
+    transform: scale(1.05);
+}
+
 .bottom-bar {
     width: 100%;
     height: 0.25rem;
     background: linear-gradient(90deg, var(--primary-color), var(--standOut-color));
+}
+
+body.dark-mode,
+body.dark-mode html {
+    background-color: #050505;
+    color: #e5e5e5;
+}
+
+body.dark-mode .app-header,
+body.dark-mode .sidebar,
+body.dark-mode .overlay,
+body.dark-mode .tasks-main-content,
+body.dark-mode .task-card,
+body.dark-mode .challenge-card,
+body.dark-mode .today-challenge-card,
+body.dark-mode .proof-item,
+body.dark-mode .glassmorphism,
+body.dark-mode .timer-bar-container,
+body.dark-mode .stats-counter,
+body.dark-mode .task-footer,
+body.dark-mode .proof-gallery,
+body.dark-mode .social-proof,
+body.dark-mode .today-challenges-panel,
+body.dark-mode .sidebar-header,
+body.dark-mode .sidebar-footer {
+    background-color: rgba(18, 18, 18, 0.95);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+    border-color: rgba(255, 255, 255, 0.08);
+}
+
+body.dark-mode .sidebar {
+    background-color: #121212;
+}
+
+body.dark-mode .sidebar-header {
+    background-color: #1d1d1d;
+}
+
+body.dark-mode .nav-link,
+body.dark-mode .logout-link,
+body.dark-mode .challenge-label,
+body.dark-mode .task-points,
+body.dark-mode .task-time,
+body.dark-mode .hero-subtitle,
+body.dark-mode .task-description,
+body.dark-mode .challenge-description p,
+body.dark-mode .proof-user,
+body.dark-mode .today-proof-state,
+body.dark-mode .friend-name,
+body.dark-mode .friend-vibe,
+body.dark-mode .friend-stats {
+    color: #d0d0d0;
+}
+
+body.dark-mode .nav-link.active,
+body.dark-mode .nav-link:hover {
+    background-color: rgba(255, 255, 255, 0.06);
+    color: #f1f1f1;
+    border-left-color: #7AB66E;
+}
+
+body.dark-mode .app-header {
+    background-color: #111111;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.55);
+}
+
+body.dark-mode .icon-btn,
+body.dark-mode .notification-icon,
+body.dark-mode .settings-icon {
+    color: #c9c9c9;
+}
+
+body.dark-mode .dark-mode-toggle {
+    background-color: #1f1f1f;
+    color: #f1f1f1;
+    border-color: rgba(255, 255, 255, 0.12);
+}
+
+body.dark-mode .icon-btn:hover {
+    color: #8cd08a;
+}
+
+body.dark-mode .bottom-bar {
+    background: linear-gradient(90deg, #6bab66, #3f7343);
+}
+
+/* ===== COMPREHENSIVE DARK MODE COVERAGE ===== */
+body.dark-mode .hero-container,
+body.dark-mode .hero-screen,
+body.dark-mode .hero-header,
+body.dark-mode .streak-flame-container,
+body.dark-mode .timer-bar-container,
+body.dark-mode .stats-counter,
+body.dark-mode .social-proof,
+body.dark-mode .today-challenges-panel,
+body.dark-mode .proof-gallery,
+body.dark-mode .proof-item,
+body.dark-mode .friend-row,
+body.dark-mode .friend-avatar,
+body.dark-mode .friend-meta,
+body.dark-mode .friend-actions,
+body.dark-mode .add-friend-btn,
+body.dark-mode .friend-badge,
+body.dark-mode .online-indicator,
+body.dark-mode .btn-primary,
+body.dark-mode .btn-challenge,
+body.dark-mode .today-challenge-upload-btn,
+body.dark-mode .today-challenge-confirm-btn,
+body.dark-mode .today-challenge-accepted-btn,
+body.dark-mode .today-proof-image-container,
+body.dark-mode .today-proof-image,
+body.dark-mode .group-label,
+body.dark-mode .task-icon,
+body.dark-mode .task-content,
+body.dark-mode .task-title,
+body.dark-mode .task-description,
+body.dark-mode .task-footer,
+body.dark-mode .task-points,
+body.dark-mode .task-time,
+body.dark-mode .task-accept-btn,
+body.dark-mode .challenge-header,
+body.dark-mode .challenge-icon,
+body.dark-mode .challenge-title,
+body.dark-mode .challenge-description,
+body.dark-mode .challenge-reward,
+body.dark-mode .reward-item,
+body.dark-mode .challenge-label,
+body.dark-mode .hero-title,
+body.dark-mode .hero-subtitle,
+body.dark-mode .streak-counter,
+body.dark-mode .streak-number,
+body.dark-mode .streak-label,
+body.dark-mode .timer-label,
+body.dark-mode .timer-time,
+body.dark-mode .stat-item,
+body.dark-mode .stat-number,
+body.dark-mode .stat-label,
+body.dark-mode .stat-divider,
+body.dark-mode .proof-title,
+body.dark-mode .proof-user,
+body.dark-mode .friends-list-container,
+body.dark-mode .friends-action-info,
+body.dark-mode .friends-streak-header,
+body.dark-mode .friends-streak-header h1,
+body.dark-mode .friend-streak,
+body.dark-mode .streak-badge,
+body.dark-mode .streak-badge i,
+body.dark-mode .streak-badge strong,
+body.dark-mode .streak-badge span,
+body.dark-mode .streak-badge div,
+body.dark-mode .logo-image,
+body.dark-mode .app-name,
+body.dark-mode .header-left,
+body.dark-mode .header-right,
+body.dark-mode .header-center,
+body.dark-mode .header-content,
+body.dark-mode .sidebar-header h2,
+body.dark-mode .close-btn,
+body.dark-mode .nav-menu,
+body.dark-mode .nav-link i,
+body.dark-mode .sidebar-footer,
+body.dark-mode .logout-link i,
+body.dark-mode .full-screen,
+body.dark-mode .full-screen h1,
+body.dark-mode .full-screen p,
+body.dark-mode .tasks-header,
+body.dark-mode .tasks-header h1 {
+    background-color: rgba(18, 18, 18, 0.95) !important;
+    color: #e0e0e0 !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+/* Specific overrides for elements that need different backgrounds */
+body.dark-mode .friend-avatar {
+    background-color: #2a2a2a !important;
+    color: #f1f1f1 !important;
+}
+
+body.dark-mode .task-icon,
+body.dark-mode .challenge-icon {
+    background: linear-gradient(135deg, #5a8a5a, #3f6a3f) !important;
+}
+
+body.dark-mode .btn-primary,
+body.dark-mode .btn-challenge,
+body.dark-mode .task-accept-btn,
+body.dark-mode .today-challenge-upload-btn,
+body.dark-mode .today-challenge-confirm-btn,
+body.dark-mode .today-challenge-accepted-btn,
+body.dark-mode .add-friend-btn {
+    background-color: #4a7a4a !important;
+    color: #ffffff !important;
+    border-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+body.dark-mode .btn-primary:hover,
+body.dark-mode .btn-challenge:hover,
+body.dark-mode .task-accept-btn:hover,
+body.dark-mode .today-challenge-upload-btn:hover,
+body.dark-mode .today-challenge-confirm-btn:hover,
+body.dark-mode .add-friend-btn:hover:not([disabled]) {
+    background-color: #5a8a5a !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(74, 122, 74, 0.4) !important;
+}
+
+body.dark-mode .stat-divider {
+    background: linear-gradient(180deg, transparent, rgba(255, 255, 255, 0.2), transparent) !important;
+}
+
+body.dark-mode .timer-fill {
+    background: linear-gradient(90deg, #7AB66E, #498756) !important;
+}
+
+body.dark-mode .close-btn {
+    color: #c9c9c9 !important;
+}
+
+body.dark-mode .close-btn:hover {
+    color: #f1f1f1 !important;
+}
+
+body.dark-mode .logout-link:hover {
+    background-color: rgba(255, 255, 255, 0.06) !important;
+    color: #f1f1f1 !important;
+}
+
+/* ===== ADDITIONAL DARK MODE OVERRIDES ===== */
+body.dark-mode .sidebar {
+    background-color: rgba(18, 18, 18, 0.98) !important;
+    box-shadow: 0.125rem 0 0.625rem rgba(0, 0, 0, 0.5) !important;
+}
+
+body.dark-mode .bottom-nav {
+    background-color: rgba(18, 18, 18, 0.98) !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+    box-shadow: 0 -0.125rem 0.5rem rgba(0, 0, 0, 0.5) !important;
+}
+
+body.dark-mode .home-content {
+    background-color: rgba(18, 18, 18, 0.95) !important;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3) !important;
+}
+
+body.dark-mode .profile-card {
+    background: rgba(18, 18, 18, 0.95) !important;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3) !important;
+}
+
+body.dark-mode .stat-box {
+    background: rgba(18, 18, 18, 0.95) !important;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+body.dark-mode .badges-section {
+    background: rgba(18, 18, 18, 0.95) !important;
+}
+
+body.dark-mode .badge-icon.active {
+    background: linear-gradient(135deg, rgba(18, 18, 18, 0.95), rgba(74, 122, 74, 0.3)) !important;
+    color: #8cd08a !important;
+    border: 1px solid #8cd08a !important;
+}
+
+body.dark-mode .friend-row {
+    background: linear-gradient(120deg, rgba(18, 18, 18, 0.95), rgba(42, 42, 42, 0.8)) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+body.dark-mode .accepted-task-btn {
+    background-color: rgba(18, 18, 18, 0.6) !important;
+    color: #e0e0e0 !important;
+    border: 2px solid rgba(255, 255, 255, 0.3) !important;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4) !important;
+}
+
+body.dark-mode .chat-message {
+    background-color: rgba(18, 18, 18, 0.95) !important;
+}
+
+body.dark-mode .friends-streak-header {
+    background: linear-gradient(135deg, #1a2a1a, #3f6a3f 55%, #5a8a5a) !important;
+}
+
+body.dark-mode .highlight-pill.active {
+    background: linear-gradient(135deg, #6bab66, #8cd08a) !important;
+    color: #ffffff !important;
+}
+
+body.dark-mode .streak-flame-container {
+    background-color: rgba(18, 18, 18, 0.95) !important;
+}
+
+body.dark-mode .timer-progress {
+    background: rgba(42, 42, 42, 0.8) !important;
+}
+
+body.dark-mode .today-proof-state {
+    color: #b8b8b8 !important;
+}
+
+body.dark-mode .today-proof-state.uploaded {
+    color: #8cd08a !important;
+}
+
+body.dark-mode .friends-main-card {
+    background: rgba(18, 18, 18, 0.95) !important;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+body.dark-mode .stats-section {
+    background: rgba(18, 18, 18, 0.95) !important;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3) !important;
+}
+
+body.dark-mode .stats-section h3 {
+    color: #8cd08a !important;
+}
+
+/* Enhanced Friends Page Dark Mode Design */
+body.dark-mode .friends-highlight-bar {
+    background: linear-gradient(135deg, rgba(18, 18, 18, 0.9), rgba(42, 42, 42, 0.7)) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+body.dark-mode .highlight-pill {
+    background: rgba(42, 42, 42, 0.8) !important;
+    color: #b8b8b8 !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+body.dark-mode .highlight-pill:hover {
+    background: rgba(74, 122, 74, 0.3) !important;
+    color: #8cd08a !important;
+    border-color: rgba(140, 208, 138, 0.3) !important;
+}
+
+body.dark-mode .highlight-pill.active {
+    background: linear-gradient(135deg, #6bab66, #8cd08a) !important;
+    color: #ffffff !important;
+    border-color: transparent !important;
+    box-shadow: 0 4px 12px rgba(107, 171, 102, 0.4) !important;
+}
+
+body.dark-mode .friends-action-info {
+    color: #b8b8b8 !important;
+}
+
+body.dark-mode .section-label {
+    color: #8cd08a !important;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* Final comprehensive dark mode coverage for any remaining white backgrounds */
+body.dark-mode [style*="background-color: #ffffff"],
+body.dark-mode [style*="background-color: white"],
+body.dark-mode [style*="background: #ffffff"],
+body.dark-mode [style*="background: white"] {
+    background-color: rgba(18, 18, 18, 0.95) !important;
+    background: rgba(18, 18, 18, 0.95) !important;
+}
+
+/* Ensure all text elements are properly colored in dark mode */
+body.dark-mode .group-label,
+body.dark-mode .task-title,
+body.dark-mode .challenge-title,
+body.dark-mode .hero-title,
+body.dark-mode .streak-number,
+body.dark-mode .streak-label,
+body.dark-mode .timer-label,
+body.dark-mode .timer-time,
+body.dark-mode .stat-number,
+body.dark-mode .stat-label,
+body.dark-mode .proof-title,
+body.dark-mode .proof-user,
+body.dark-mode .friends-action-info,
+body.dark-mode .friends-streak-header h1,
+body.dark-mode .streak-badge strong,
+body.dark-mode .streak-badge span,
+body.dark-mode .sidebar-header h2,
+body.dark-mode .tasks-header h1,
+body.dark-mode .full-screen h1,
+body.dark-mode .full-screen p {
+    color: #e0e0e0 !important;
+}
+
+/* Muted text elements */
+body.dark-mode .hero-subtitle,
+body.dark-mode .task-description,
+body.dark-mode .challenge-description p,
+body.dark-mode .task-points,
+body.dark-mode .task-time,
+body.dark-mode .challenge-label,
+body.dark-mode .today-proof-state,
+body.dark-mode .friend-name,
+body.dark-mode .friend-vibe,
+body.dark-mode .friend-stats,
+body.dark-mode .reward-item {
+    color: #b8b8b8 !important;
 }
 
 /* ===== SIDEBAR NAVIGATION ===== */
@@ -1004,7 +1443,7 @@ h1 { color: #4a7c44; font-size: 1.2rem; margin-bottom: 15px; }
     font-weight: 800;
 }
 .tasks-main-content {
-    background-color: #e9f3e8;
+    background-color: var(--card-background);
     border-radius: 40px 40px 0 0;
     flex-grow: 1;
     padding: 25px 15px;
@@ -1019,7 +1458,7 @@ h1 { color: #4a7c44; font-size: 1.2rem; margin-bottom: 15px; }
     margin: 20px 0;
 }
 .task-card {
-    background: #f1f8f0;
+    background: var(--card-background);
     border-radius: 20px;
     padding: 20px;
     display: flex;
@@ -2003,6 +2442,7 @@ h1 { color: #4a7c44; font-size: 1.2rem; margin-bottom: 15px; }
     gap: 1.75rem;
     align-items: center;
     box-sizing: border-box;
+    position: relative;
 }
 
 /* HERO HEADER */
@@ -2022,7 +2462,7 @@ h1 { color: #4a7c44; font-size: 1.2rem; margin-bottom: 15px; }
 
 .hero-subtitle {
     font-size: 1rem;
-    color: #666;
+    color: var(--muted-text);
     margin: 0;
     font-weight: 500;
 }
@@ -2268,7 +2708,7 @@ h1 { color: #4a7c44; font-size: 1.2rem; margin-bottom: 15px; }
 }
 
 .glassmorphism {
-    background: rgba(255, 255, 255, 0.7);
+    background: var(--surface-background);
     backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 255, 255, 0.3);
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
