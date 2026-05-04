@@ -368,15 +368,21 @@ async function loadMessagesFromGoogle() {
 
 function handleCredentialResponse(response) {
     let data = JSON.parse(atob(response.credential.split('.')[1]));
-    let userObj = { name: data.name, email: data.email, picture: data.picture, isLoggedIn: true };
-    localStorage.setItem('ecoUser', JSON.stringify(userObj));
     
-    // An Google Sheets melden
+    let userObj = {
+        name: data.name,
+        email: data.email,
+        picture: data.picture,
+        isLoggedIn: true
+    };
+
+    localStorage.setItem('ecoUser', JSON.stringify(userObj));
+    // An sheets melden
     fetch(WEB_APP_URL, {
         method: "POST",
         mode: "no-cors",
         body: JSON.stringify({
-            action: "register",
+            action: "register", 
             name: data.name,
             email: data.email,
             picture: data.picture
@@ -1246,20 +1252,6 @@ document.addEventListener('change', function(e) {
     };
     reader.readAsDataURL(file);
 });
-
-function handleCredentialResponse(response) {
-    let data = JSON.parse(atob(response.credential.split('.')[1]))
-    
-    let userObj = {
-        name: data.name,
-        email: data.email,
-        picture: data.picture,
-        isLoggedIn: true
-    }
-
-    localStorage.setItem('ecoUser', JSON.stringify(userObj))
-    renderProfile(userObj)
-}
 
 function renderProfile(user) {
     if (!user) return;
