@@ -562,6 +562,32 @@ function renderTodayChallenges() {
             ? `<div class="today-proof-image-container"><img src="${task.proofFileData}" alt="Beweis-Foto" class="today-proof-image"></div>`
             : '';
 
+        const uploadButton = task.isCompleted
+            ? ''
+            : `<button class="btn-primary btn-challenge today-challenge-upload-btn" type="button" data-challenge-index="${index}">
+                    <i class="fas fa-upload"></i> Beweis hochladen
+               </button>`;
+
+        const confirmButton = task.proofFileData && !task.isCompleted
+            ? `<button class="btn-primary btn-challenge today-challenge-confirm-btn" type="button" data-challenge-index="${index}" data-challenge-key="${escapeHtmlText(challengeKey)}">
+                    <i class="fas fa-check"></i> Hochladen bestätigen
+               </button>`
+            : '';
+
+        const acceptedButton = !task.isCompleted && !task.proofFileData
+            ? `<button class="btn-primary btn-challenge today-challenge-accepted-btn" type="button" disabled>
+                    <i class="fas fa-check"></i> Akzeptiert
+               </button>`
+            : '';
+
+        const completionNotice = task.isCompleted
+            ? `<p class="today-proof-state completed"><i class="fas fa-check-circle"></i> Aufgabe abgeschlossen</p>`
+            : '';
+
+        const proofInput = task.isCompleted
+            ? ''
+            : `<input class="today-challenge-upload-input" type="file" accept="image/*" data-challenge-index="${index}" data-challenge-key="${escapeHtmlText(challengeKey)}">`;
+
         return `
         <div class="today-challenge-card glassmorphism">
             <div class="challenge-header">
@@ -585,16 +611,13 @@ function renderTodayChallenges() {
             </div>
 
             ${proofImage}
-
-            <button class="btn-primary btn-challenge today-challenge-accepted-btn" type="button" disabled>
-                <i class="fas fa-check"></i> Akzeptiert
-            </button>
-
-            <button class="btn-primary btn-challenge today-challenge-upload-btn" type="button" data-challenge-index="${index}">
-                <i class="fas fa-upload"></i> Beweis hochladen
-            </button>
-            <input class="today-challenge-upload-input" type="file" accept="image/*" data-challenge-index="${index}" data-challenge-key="${escapeHtmlText(challengeKey)}">
             ${uploadState}
+            ${completionNotice}
+
+            ${acceptedButton}
+            ${uploadButton}
+            ${proofInput}
+            ${confirmButton}
         </div>
     `;
     }).join('');
@@ -608,6 +631,25 @@ function saveProofUpload(challengeKey, fileName, fileData) {
     acceptedTasks[taskIndex].proofFileData = fileData; // Speichere die Bilddaten als Data URL
     acceptedTasks[taskIndex].proofUploadedAt = new Date().toISOString();
     saveAcceptedTasks();
+}
+
+function confirmTaskProof(challengeKey) {
+    const taskIndex = acceptedTasks.findIndex(task => getAcceptedTaskKey(task) === challengeKey);
+    if (taskIndex === -1) return;
+
+    const task = acceptedTasks[taskIndex];
+    if (!task.proofFileData || task.isCompleted) return;
+
+    task.isCompleted = true;
+    task.status = 'completed';
+    task.completedAt = new Date().toISOString();
+
+    if (task.isDaily) {
+        incrementStreak();
+    }
+
+    saveAcceptedTasks();
+    renderTodayChallenges();
 }
 
 function syncAcceptedTasksToUI() {
@@ -1053,6 +1095,13 @@ document.addEventListener('click', function(e) {
         const index = uploadBtn.getAttribute('data-challenge-index');
         const input = document.querySelector(`.today-challenge-upload-input[data-challenge-index="${index}"]`);
         if (input) input.click();
+        return;
+    }
+
+    const confirmBtn = e.target.closest('.today-challenge-confirm-btn');
+    if (confirmBtn) {
+        const challengeKey = confirmBtn.getAttribute('data-challenge-key');
+        if (challengeKey) confirmTaskProof(challengeKey);
         return;
     }
 
