@@ -121,7 +121,7 @@ header{
 
 body.dark-mode .logo-image {
     filter: none !important;
-    background: transparent !important;
+    background: none !important;
 }
 
 .app-name {
@@ -334,11 +334,9 @@ body.dark-mode .streak-badge i,
 body.dark-mode .streak-badge strong,
 body.dark-mode .streak-badge span,
 body.dark-mode .streak-badge div,
-body.dark-mode .logo-image,
 body.dark-mode .app-name,
 body.dark-mode .header-left,
 body.dark-mode .header-right,
-body.dark-mode .header-center,
 body.dark-mode .header-content,
 body.dark-mode .sidebar-header h2,
 body.dark-mode .close-btn,
