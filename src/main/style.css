@@ -108,12 +108,20 @@ header{
     gap: 0.625rem;
     flex: 2;
     justify-content: center;
+    background: transparent !important;
 }
 
 .logo-image {
-    width: 10.5rem;
-    height: 10.5rem;
+    width: auto;
+    max-width: 10rem;
+    max-height: 5rem;
+    background-color: none !important;
     object-fit: contain;
+}
+
+body.dark-mode .logo-image {
+    filter: none !important;
+    background: transparent !important;
 }
 
 .app-name {
@@ -2104,7 +2112,10 @@ h1 { color: #4a7c44; font-size: 1.2rem; margin-bottom: 15px; }
     .logo-image {
         width: 8rem;
         height: 8rem;
-    }
+        mix-blend-mode: normal; /* optional */
+        background: none;
+}
+    
 
     .menu-btn,
     .icon-btn {
