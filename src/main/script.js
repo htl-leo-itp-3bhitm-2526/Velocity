@@ -1378,6 +1378,7 @@ function renderProfile(user) {
     if (avatarEl) avatarEl.src = user.picture
     if (locationEl) locationEl.textContent = user.email
     if (loginBtn) loginBtn.style.display = 'none';
+    if (logoutBtn) logoutBtn.style.display = 'block';
 }
 
 document.addEventListener('DOMContentLoaded', () => {
