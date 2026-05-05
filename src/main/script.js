@@ -1372,17 +1372,28 @@ function renderProfile(user) {
     let avatarEl = document.getElementById('user-avatar')
     let locationEl = document.getElementById('user-location')
     let loginBtn = document.querySelector('.g_id_signin');
+    let logoutBtn = document.getElementById('logoutBtn');
 
     if (nameEl) nameEl.textContent = user.name
     if (avatarEl) avatarEl.src = user.picture
     if (locationEl) locationEl.textContent = user.email
     if (loginBtn) loginBtn.style.display = 'none';
-    
-    // Update points display
-    updatePointsDisplay();
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', logout);
+    }
+    
+    const logoutLink = document.querySelector('.logout-link');
+    if (logoutLink) {
+        logoutLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            logout();
+        });
+    }
+    
     const savedUser = localStorage.getItem('ecoUser')
     if (savedUser) {
         renderProfile(JSON.parse(savedUser))

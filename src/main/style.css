@@ -342,7 +342,8 @@ body.dark-mode .full-screen,
 body.dark-mode .full-screen h1,
 body.dark-mode .full-screen p,
 body.dark-mode .tasks-header,
-body.dark-mode .tasks-header h1 {
+body.dark-mode .tasks-header h1,
+body.dark-mode .btn-logout {
     background-color: rgba(18, 18, 18, 0.95) !important;
     color: #e0e0e0 !important;
     border-color: rgba(255, 255, 255, 0.08) !important;
@@ -371,6 +372,12 @@ body.dark-mode .add-friend-btn {
     border-color: rgba(255, 255, 255, 0.2) !important;
 }
 
+body.dark-mode .btn-logout {
+    background: linear-gradient(135deg, #8b3a3a, #6b2a2a) !important;
+    color: #ffffff !important;
+    border-color: rgba(255, 255, 255, 0.2) !important;
+}
+
 body.dark-mode .btn-primary:hover,
 body.dark-mode .btn-challenge:hover,
 body.dark-mode .task-accept-btn:hover,
@@ -380,6 +387,12 @@ body.dark-mode .add-friend-btn:hover:not([disabled]) {
     background-color: #5a8a5a !important;
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(74, 122, 74, 0.4) !important;
+}
+
+body.dark-mode .btn-logout:hover {
+    background: linear-gradient(135deg, #a54a4a, #8b3a3a) !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(139, 58, 58, 0.4) !important;
 }
 
 body.dark-mode .stat-divider {
@@ -2810,6 +2823,37 @@ h1 { color: #4a7c44; font-size: 1.2rem; margin-bottom: 15px; }
 }
 
 .btn-primary:active {
+    transform: translateY(0);
+}
+
+/* LOGOUT BUTTON */
+.btn-logout {
+    background: linear-gradient(135deg, #ff6b6b, #ee5a52);
+    color: white;
+    border: none;
+    border-radius: 15px;
+    padding: 1rem 1.5rem;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    transition: var(--transition);
+    box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    width: 100%;
+    margin-top: 1rem;
+}
+
+.btn-logout:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 25px rgba(255, 107, 107, 0.4);
+}
+
+.btn-logout:active {
     transform: translateY(0);
 }
 
