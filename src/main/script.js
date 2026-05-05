@@ -578,6 +578,56 @@ function displayStreak() {
 
 // ===== ENDE STREAK COUNTER MANAGEMENT =====
 
+// ===== POINTS MANAGEMENT =====
+let userPoints = JSON.parse(localStorage.getItem('userPoints')) || {
+    total: 0,
+    completedTasks: []
+};
+
+const POINTS_STORAGE_KEY = 'userPoints';
+
+function savePoints() {
+    localStorage.setItem(POINTS_STORAGE_KEY, JSON.stringify(userPoints));
+}
+
+function addPoints(amount, taskName) {
+    if (amount <= 0) return false;
+    
+    userPoints.total += amount;
+    userPoints.completedTasks.push({
+        taskName: taskName,
+        points: amount,
+        completedAt: new Date().toISOString()
+    });
+    
+    savePoints();
+    updatePointsDisplay();
+    return true;
+}
+
+function getPoints() {
+    return userPoints.total;
+}
+
+function extractPointsFromTask(task) {
+    if (!task) return 0;
+    
+    // Suche nach der Punkte-Information im Task-Objekt oder HTML-Struktur
+    // Format: z.B. "50 Punkte", "40 Punkte", etc.
+    const taskStr = JSON.stringify(task);
+    const match = taskStr.match(/(\d+)\s*(?:Punkte|points)/i);
+    return match ? parseInt(match[1], 10) : 0;
+}
+
+function updatePointsDisplay() {
+    const pointsEl = document.getElementById('stat-points');
+    if (pointsEl) {
+        pointsEl.textContent = userPoints.total;
+    }
+}
+
+// ===== ENDE POINTS MANAGEMENT =====
+
 // Task management
 let allTasks = { weekly: [], daily: [] };
 let currentTask = null;
@@ -622,7 +672,21 @@ function removeTaskFromTaskSection(taskName) {
         const buttonTask = card.querySelector('.task-accept-btn')?.getAttribute('data-task') || '';
 
         if (normalizeTaskName(titleText) === normalizedName || normalizeTaskName(buttonTask) === normalizedName) {
-            card.remove();
+            card.style.display = 'none';
+        }
+    });
+}
+
+function restoreTaskInTaskSection(taskName) {
+    const normalizedName = normalizeTaskName(taskName);
+    const taskCards = document.querySelectorAll('#tasks .task-card[style*="display: none"]');
+
+    taskCards.forEach(card => {
+        const titleText = card.querySelector('.task-title')?.textContent || '';
+        const buttonTask = card.querySelector('.task-accept-btn')?.getAttribute('data-task') || '';
+
+        if (normalizeTaskName(titleText) === normalizedName || normalizeTaskName(buttonTask) === normalizedName) {
+            card.style.display = '';
         }
     });
 }
@@ -682,6 +746,9 @@ function renderTodayChallenges() {
             ? ''
             : `<input class="today-challenge-upload-input" type="file" accept="image/*" data-challenge-index="${index}" data-challenge-key="${escapeHtmlText(challengeKey)}">`;
 
+        // Display correct points from task
+        const displayPoints = task.points || 50;
+
         return `
         <div class="today-challenge-card glassmorphism">
             <div class="challenge-header">
@@ -700,7 +767,7 @@ function renderTodayChallenges() {
             <div class="challenge-reward">
                 <div class="reward-item">
                     <i class="fas fa-star"></i>
-                    <span>50 Punkte</span>
+                    <span>${displayPoints} Punkte</span>
                 </div>
             </div>
 
@@ -738,6 +805,27 @@ function confirmTaskProof(challengeKey) {
     task.status = 'completed';
     task.completedAt = new Date().toISOString();
 
+    // Extract points from task and award them
+    let points = 0;
+    
+    // Try to extract points from accepted tasks data
+    if (task.points) {
+        points = parseInt(task.points, 10);
+    } else {
+        // Try to find the task in allTasks and extract points
+        const foundTask = (allTasks.weekly || []).concat(allTasks.daily || []).find(t => 
+            normalizeTaskName(t.task) === normalizeTaskName(task.task)
+        );
+        if (foundTask) {
+            points = extractPointsFromTask(foundTask);
+        }
+    }
+    
+    // Award points if any were found
+    if (points > 0) {
+        addPoints(points, task.task);
+    }
+
     if (task.isDaily) {
         incrementStreak();
     }
@@ -747,7 +835,16 @@ function confirmTaskProof(challengeKey) {
 }
 
 function syncAcceptedTasksToUI() {
+    // Alle Aufgaben wieder anzeigen
+    const allTaskCards = document.querySelectorAll('#tasks .task-card');
+    allTaskCards.forEach(card => {
+        card.style.display = '';
+    });
+    
+    // Akzeptierte Aufgaben verstecken
     acceptedTasks.forEach(task => removeTaskFromTaskSection(task.task));
+    
+    // Laufende Challenges anzeigen
     renderTodayChallenges();
 }
 
@@ -757,9 +854,11 @@ async function loadTasks() {
         const response = await fetch('../../assets/tasks.json');
         allTasks = await response.json();
         loadDailyTask(); // Tägliche Challenge laden
-        syncAcceptedTasksToUI();
     } catch (error) {
         console.error('Fehler beim Laden der Tasks:', error);
+    } finally {
+        // Always sync tasks to UI, even if JSON load fails
+        syncAcceptedTasksToUI();
     }
 }
 
@@ -1212,11 +1311,24 @@ document.addEventListener('click', function(e) {
             return;
         }
         
+        // Find the task card to extract points
+        const taskCard = btn.closest('.task-card');
+        let points = 0;
+        
+        if (taskCard) {
+            const pointsText = taskCard.querySelector('.task-points')?.textContent || '';
+            const pointsMatch = pointsText.match(/(\d+)\s*Punkte/);
+            if (pointsMatch) {
+                points = parseInt(pointsMatch[1], 10);
+            }
+        }
+        
         // Create task object
         const task = {
             id: Date.now(),
             task: taskName,
             icon: taskIcon,
+            points: points,
             acceptedDate: new Date().toISOString(),
             status: 'accepted'
         };
@@ -1265,6 +1377,9 @@ function renderProfile(user) {
     if (avatarEl) avatarEl.src = user.picture
     if (locationEl) locationEl.textContent = user.email
     if (loginBtn) loginBtn.style.display = 'none';
+    
+    // Update points display
+    updatePointsDisplay();
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -1272,6 +1387,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (savedUser) {
         renderProfile(JSON.parse(savedUser))
     }
+    
+    // Initialize points display
+    updatePointsDisplay();
 })
 
 window.onload = () => {
