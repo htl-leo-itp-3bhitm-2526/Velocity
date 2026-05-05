@@ -1378,6 +1378,29 @@ function renderProfile(user) {
     if (avatarEl) avatarEl.src = user.picture
     if (locationEl) locationEl.textContent = user.email
     if (loginBtn) loginBtn.style.display = 'none';
+    if (logoutBtn) logoutBtn.disabled = false;
+}
+
+function logout() {
+    // Clear user data from localStorage
+    localStorage.removeItem('ecoUser');
+    
+    // Sign out from Google
+    google.accounts.id.disableAutoSelect();
+    
+    // Disable logout button and show Google sign-in button
+    let loginBtn = document.querySelector('.g_id_signin');
+    let logoutBtn = document.getElementById('logoutBtn');
+    if (loginBtn) loginBtn.style.display = 'block';
+    if (logoutBtn) logoutBtn.disabled = true;
+    
+    // Clear profile information
+    let nameEl = document.getElementById('user-name')
+    let avatarEl = document.getElementById('user-avatar')
+    let locationEl = document.getElementById('user-location')
+    if (nameEl) nameEl.textContent = 'LÄDT...'
+    if (avatarEl) avatarEl.src = 'avatar.png'
+    if (locationEl) locationEl.textContent = 'ORGANISATION'
 }
 
 document.addEventListener('DOMContentLoaded', () => {

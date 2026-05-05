@@ -403,6 +403,18 @@ body.dark-mode .btn-logout:hover {
     box-shadow: 0 4px 12px rgba(139, 58, 58, 0.4) !important;
 }
 
+body.dark-mode .btn-logout:disabled {
+    background: linear-gradient(135deg, #505050, #3a3a3a) !important;
+    color: #888 !important;
+    cursor: not-allowed;
+    box-shadow: 0 4px 12px rgba(80, 80, 80, 0.3) !important;
+}
+
+body.dark-mode .btn-logout:disabled:hover {
+    transform: none;
+    box-shadow: 0 4px 12px rgba(80, 80, 80, 0.3) !important;
+}
+
 body.dark-mode .stat-divider {
     background: linear-gradient(180deg, transparent, rgba(255, 255, 255, 0.2), transparent) !important;
 }
@@ -2866,6 +2878,18 @@ h1 { color: #4a7c44; font-size: 1.2rem; margin-bottom: 15px; }
 
 .btn-logout:active {
     transform: translateY(0);
+}
+
+.btn-logout:disabled {
+    background: linear-gradient(135deg, #9e9e9e, #757575);
+    color: #ccc;
+    cursor: not-allowed;
+    box-shadow: 0 4px 15px rgba(158, 158, 158, 0.3);
+}
+
+.btn-logout:disabled:hover {
+    transform: none;
+    box-shadow: 0 4px 15px rgba(158, 158, 158, 0.3);
 }
 
 .btn-challenge {
