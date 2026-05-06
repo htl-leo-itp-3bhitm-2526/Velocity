@@ -97,6 +97,7 @@ document.addEventListener('DOMContentLoaded', () => {
   navigateTo('home')
   const initialCount = parseInt(streakCountEl?.textContent || '0', 10)
   updateStreakFlameStage(initialCount)
+  loadRecentUploads() // Load recent uploads on page load
 })
 
 // Home js
@@ -654,6 +655,42 @@ function saveAcceptedTasks() {
     localStorage.setItem('acceptedTasks', JSON.stringify(acceptedTasks));
 }
 
+function loadRecentUploads() {
+    // Filter tasks with proof uploads, sort by upload date descending, take first 3
+    const uploads = acceptedTasks
+        .filter(task => task.proofFileData && task.proofUploadedAt)
+        .sort((a, b) => new Date(b.proofUploadedAt) - new Date(a.proofUploadedAt))
+        .slice(0, 3);
+
+    const proofGallery = document.querySelector('.proof-gallery');
+    if (!proofGallery) return;
+
+    // Clear existing items
+    proofGallery.innerHTML = '';
+
+    if (uploads.length === 0) {
+        // Show placeholder if no uploads
+        proofGallery.innerHTML = `
+            <div class="proof-item">
+                <img src="https://via.placeholder.com/80/7AB66E/ffffff?text=Kein+Upload" alt="No uploads yet">
+                <span class="proof-user">Noch keine Beweise</span>
+            </div>
+        `;
+        return;
+    }
+
+    // Add recent uploads
+    uploads.forEach(upload => {
+        const item = document.createElement('div');
+        item.className = 'proof-item';
+        item.innerHTML = `
+            <img src="${upload.proofFileData}" alt="User upload">
+            <span class="proof-user">${upload.task}</span>
+        `;
+        proofGallery.appendChild(item);
+    });
+}
+
 function getAcceptedTaskKey(task) {
     return `${normalizeTaskName(task.task)}|${task.acceptedDate || ''}`;
 }
@@ -792,6 +829,7 @@ function saveProofUpload(challengeKey, fileName, fileData) {
     acceptedTasks[taskIndex].proofFileData = fileData; // Speichere die Bilddaten als Data URL
     acceptedTasks[taskIndex].proofUploadedAt = new Date().toISOString();
     saveAcceptedTasks();
+    loadRecentUploads(); // Update recent uploads display
 }
 
 function confirmTaskProof(challengeKey) {
