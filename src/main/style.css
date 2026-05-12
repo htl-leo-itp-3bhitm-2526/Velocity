@@ -1056,7 +1056,7 @@ body.dark-mode .badge-toast-desc {
 }
 
 #home img {
-    width: 100%;
+
     height: auto;
     border-radius: 0.75rem;
     box-shadow: var(--shadow);
@@ -3176,14 +3176,15 @@ h1 { color: #4a7c44; font-size: 1.2rem; margin-bottom: 15px; }
 }
 
 .proof-item img {
-    width: 80px;
-    height: 80px;
+    width: 10%;
+    height: auto;
     border-radius: 12px;
     object-fit: cover;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     border: 2px solid var(--secondary-color);
     transition: var(--transition);
 }
+
 
 .proof-item img:hover {
     transform: scale(1.08);
