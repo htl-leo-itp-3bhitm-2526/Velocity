@@ -472,6 +472,21 @@ body.dark-mode .badge-icon.active {
     border: 1px solid #8cd08a !important;
 }
 
+body.dark-mode .badge-icon.earned {
+    background: linear-gradient(135deg, rgba(255, 184, 77, 0.2), rgba(255, 184, 77, 0.1)) !important;
+    border: 2px solid #FFB84D !important;
+    color: #FFB84D !important;
+}
+
+body.dark-mode .badge-icon.locked {
+    background: rgba(100, 100, 100, 0.3) !important;
+    color: #666 !important;
+}
+
+body.dark-mode .badge-progress {
+    color: #aaa !important;
+}
+
 body.dark-mode .friend-row {
     background: linear-gradient(120deg, rgba(18, 18, 18, 0.95), rgba(42, 42, 42, 0.8)) !important;
     border: 1px solid rgba(255, 255, 255, 0.08) !important;
@@ -747,6 +762,109 @@ body.dark-mode .reward-item {
     background-color: rgba(0, 0, 0, 0.5);
     opacity: 1;
     pointer-events: auto;
+}
+
+/* ===== TOAST NOTIFICATIONS ===== */
+
+.toast-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-width: 350px;
+}
+
+.badge-toast {
+    background: #ffffff;
+    border-left: 4px solid #FFB84D;
+    border-radius: 12px;
+    padding: 16px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    animation: toast-slide-in 0.3s ease-out;
+    transform: translateX(400px);
+    transition: transform 0.3s ease-out;
+}
+
+.badge-toast.show {
+    transform: translateX(0);
+}
+
+.badge-toast-content {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+}
+
+.badge-toast-icon {
+    font-size: 1.8rem;
+    flex-shrink: 0;
+    animation: badge-pulse 0.6s ease-out;
+}
+
+.badge-toast-text {
+    flex: 1;
+}
+
+.badge-toast-title {
+    font-size: 0.85rem;
+    color: #999;
+    font-weight: 500;
+    margin-bottom: 2px;
+}
+
+.badge-toast-name {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 4px;
+}
+
+.badge-toast-desc {
+    font-size: 0.8rem;
+    color: #666;
+}
+
+@keyframes toast-slide-in {
+    from {
+        transform: translateX(400px);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes badge-pulse {
+    0% {
+        transform: scale(0);
+    }
+    50% {
+        transform: scale(1.2);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+body.dark-mode .badge-toast {
+    background: rgba(40, 40, 40, 0.95);
+    color: #fff;
+}
+
+body.dark-mode .badge-toast-title {
+    color: #999;
+}
+
+body.dark-mode .badge-toast-name {
+    color: #fff;
+}
+
+body.dark-mode .badge-toast-desc {
+    color: #ccc;
 }
 
 /* ===== MAIN CONTENT ===== */
@@ -1320,12 +1438,44 @@ h1 { color: #4a7c44; font-size: 1.2rem; margin-bottom: 15px; }
     font-size: 1.8rem;
     color: #ccc;
     transition: var(--transition);
+    position: relative;
 }
 .badge-icon.active {
     background: linear-gradient(135deg, #ffffff, #e6f4db);
     color: #7AB66E;
     box-shadow: 0 10px 20px rgba(122, 182, 110, 0.2);
     border: 1px solid #7AB66E;
+}
+.badge-icon.earned {
+    background: linear-gradient(135deg, #fff9e6, #ffe6b3);
+    box-shadow: 0 10px 20px rgba(255, 184, 77, 0.3);
+    border: 2px solid #FFB84D;
+    animation: badge-earned 0.6s ease-out;
+}
+.badge-icon.locked {
+    background: #e8e8e8;
+    color: #999;
+    position: relative;
+}
+.badge-progress {
+    position: absolute;
+    bottom: -20px;
+    font-size: 0.7rem;
+    color: #666;
+    white-space: nowrap;
+}
+@keyframes badge-earned {
+    0% {
+        transform: scale(0);
+        opacity: 0;
+    }
+    50% {
+        transform: scale(1.1);
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
 }
 
 .friend-row {

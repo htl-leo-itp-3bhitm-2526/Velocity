@@ -629,6 +629,128 @@ function updatePointsDisplay() {
 
 // ===== ENDE POINTS MANAGEMENT =====
 
+// ===== BADGE MANAGEMENT =====
+const BADGES_STORAGE_KEY = 'userBadges';
+
+const BADGE_DEFINITIONS = [
+    { id: 'first_upload', name: 'Erstes Abenteuer', icon: 'fas fa-star', description: '1 Beweis hochgeladen', threshold: 1, color: '#FFB84D' },
+    { id: 'eco_warrior', name: 'Eco Warrior', icon: 'fas fa-leaf', description: '5 Beweise hochgeladen', threshold: 5, color: '#7AB66E' },
+    { id: 'sustainability_master', name: 'Nachhaltigkeits-Meister', icon: 'fas fa-crown', description: '10 Beweise hochgeladen', threshold: 10, color: '#FFD700' },
+    { id: 'green_legend', name: 'Green Legend', icon: 'fas fa-trophy', description: '25 Beweise hochgeladen', threshold: 25, color: '#9370DB' },
+    { id: 'planet_savior', name: 'Planet Retter', icon: 'fas fa-globe', description: '50 Beweise hochgeladen', threshold: 50, color: '#FF6B6B' }
+];
+
+function getUserBadges() {
+    return JSON.parse(localStorage.getItem(BADGES_STORAGE_KEY)) || [];
+}
+
+function saveUserBadges(badges) {
+    localStorage.setItem(BADGES_STORAGE_KEY, JSON.stringify(badges));
+}
+
+function getUploadCount() {
+    return acceptedTasks.filter(task => task.proofUploadedAt).length;
+}
+
+function checkAndAwardBadges() {
+    const uploadCount = getUploadCount();
+    const userBadges = getUserBadges();
+    let newBadgesAwarded = [];
+    
+    BADGE_DEFINITIONS.forEach(badgeDef => {
+        if (uploadCount >= badgeDef.threshold) {
+            const hasBadge = userBadges.some(badge => badge.id === badgeDef.id);
+            if (!hasBadge) {
+                const newBadge = {
+                    id: badgeDef.id,
+                    name: badgeDef.name,
+                    icon: badgeDef.icon,
+                    description: badgeDef.description,
+                    awardedAt: new Date().toISOString(),
+                    color: badgeDef.color
+                };
+                userBadges.push(newBadge);
+                newBadgesAwarded.push(newBadge);
+            }
+        }
+    });
+    
+    saveUserBadges(userBadges);
+    
+    // Show toast notification for each new badge
+    newBadgesAwarded.forEach(badge => {
+        showBadgeToast(badge);
+    });
+    
+    renderBadges();
+}
+
+function renderBadges() {
+    const badgeContainer = document.getElementById('badge-container');
+    if (!badgeContainer) return;
+    
+    const userBadges = getUserBadges();
+    const uploadCount = getUploadCount();
+    
+    badgeContainer.innerHTML = '';
+    
+    // Render earned badges
+    userBadges.forEach(badge => {
+        const badgeEl = document.createElement('div');
+        badgeEl.className = 'badge-icon earned';
+        badgeEl.style.color = badge.color;
+        badgeEl.title = `${badge.name}: ${badge.description}`;
+        badgeEl.innerHTML = `<i class="${badge.icon}"></i>`;
+        badgeContainer.appendChild(badgeEl);
+    });
+    
+    // Show next available badge
+    const nextBadge = BADGE_DEFINITIONS.find(b => uploadCount < b.threshold && !userBadges.some(ub => ub.id === b.id));
+    if (nextBadge) {
+        const progress = uploadCount / nextBadge.threshold;
+        const nextBadgeEl = document.createElement('div');
+        nextBadgeEl.className = 'badge-icon locked';
+        nextBadgeEl.style.opacity = '0.4';
+        nextBadgeEl.title = `${nextBadge.name}: ${nextBadge.description} (${uploadCount}/${nextBadge.threshold})`;
+        nextBadgeEl.innerHTML = `<i class="${nextBadge.icon}" style="font-size: 0.8em;"></i><span class="badge-progress">${uploadCount}/${nextBadge.threshold}</span>`;
+        badgeContainer.appendChild(nextBadgeEl);
+    }
+}
+
+function showBadgeToast(badge) {
+    const toastContainer = document.getElementById('toast-container');
+    if (!toastContainer) return;
+    
+    const toast = document.createElement('div');
+    toast.className = 'badge-toast';
+    toast.style.borderLeftColor = badge.color;
+    toast.innerHTML = `
+        <div class="badge-toast-content">
+            <div class="badge-toast-icon" style="color: ${badge.color};">
+                <i class="${badge.icon}"></i>
+            </div>
+            <div class="badge-toast-text">
+                <div class="badge-toast-title">🎉 Neues Badge!</div>
+                <div class="badge-toast-name">${badge.name}</div>
+                <div class="badge-toast-desc">${badge.description}</div>
+            </div>
+        </div>
+    `;
+    
+    toastContainer.appendChild(toast);
+    
+    // Trigger animation
+    setTimeout(() => toast.classList.add('show'), 10);
+    
+    // Remove after 4 seconds
+    setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 300);
+    }, 4000);
+}
+
+// ===== ENDE BADGE MANAGEMENT =====
+
 // Task management
 let allTasks = { weekly: [], daily: [] };
 let currentTask = null;
@@ -867,6 +989,9 @@ function confirmTaskProof(challengeKey) {
     if (task.isDaily) {
         incrementStreak();
     }
+
+    // Check and award badges
+    checkAndAwardBadges();
 
     saveAcceptedTasks();
     renderTodayChallenges();
@@ -1417,6 +1542,9 @@ function renderProfile(user) {
     if (locationEl) locationEl.textContent = user.email
     if (loginBtn) loginBtn.style.display = 'none';
     if (logoutBtn) logoutBtn.disabled = false;
+    
+    // Render badges
+    renderBadges();
 }
 
 function logout() {
@@ -1462,6 +1590,9 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Initialize points display
     updatePointsDisplay();
+    
+    // Initialize badges display
+    renderBadges();
 })
 
 window.onload = () => {
