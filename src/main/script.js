@@ -7,6 +7,75 @@ let sections = document.querySelectorAll('.full-screen')
 const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxiib5KO8jUV9Ok2mYWkN_UqPe7pjibCAjcO12L8p2AGknv0YhUQshO7sXgBGP4kLn5xg/exec";
 let chatRefreshInterval = null;
 
+function getAccountStorageKey(key, email) {
+  email = email || getLoggedInUser()?.email;
+  if (!email) return key;
+  const normalizedEmail = encodeURIComponent(email.toLowerCase()).replace(/%/g, '_');
+  return `${key}_${normalizedEmail}`;
+}
+
+function getStoredValue(key, defaultValue = null, email) {
+  const storageKey = getAccountStorageKey(key, email);
+  const storedValue = localStorage.getItem(storageKey);
+  if (storedValue === null) return defaultValue;
+  try {
+    return JSON.parse(storedValue);
+  } catch (error) {
+    return defaultValue;
+  }
+}
+
+function setStoredValue(key, value, email) {
+  localStorage.setItem(getAccountStorageKey(key, email), JSON.stringify(value));
+}
+
+function removeStoredValue(key, email) {
+  localStorage.removeItem(getAccountStorageKey(key, email));
+}
+
+function loadUserState(email) {
+  streakData = getStoredValue('streakData', {
+    count: 0,
+    lastUpdated: null,
+    lastUpdateDate: null,
+    completedToday: false
+  }, email);
+
+  userPoints = getStoredValue(POINTS_STORAGE_KEY, {
+    total: 0,
+    completedTasks: []
+  }, email);
+
+  acceptedTasks = getStoredValue('acceptedTasks', [], email);
+
+  const savedDarkMode = getStoredValue('ecoDarkMode', false, email);
+  initializeDarkMode(savedDarkMode === true || savedDarkMode === '1');
+
+  updatePointsDisplay();
+  renderBadges();
+  renderTodayChallenges();
+  displayStreak();
+}
+
+function resetUserState() {
+  streakData = {
+    count: 0,
+    lastUpdated: null,
+    lastUpdateDate: null,
+    completedToday: false
+  };
+  userPoints = {
+    total: 0,
+    completedTasks: []
+  };
+  acceptedTasks = [];
+  initializeDarkMode(false);
+  updatePointsDisplay();
+  renderBadges();
+  renderTodayChallenges();
+  displayStreak();
+}
+
 let toggleMenu = (isOpen) => {
   sidebar.classList.toggle('active', isOpen)
   overlay.classList.toggle('active', isOpen)
@@ -72,7 +141,7 @@ function setDarkMode(enabled) {
   if (darkModeIcon) {
     darkModeIcon.className = enabled ? 'fas fa-sun' : 'fas fa-moon';
   }
-  localStorage.setItem('ecoDarkMode', enabled ? '1' : '0');
+  setStoredValue('ecoDarkMode', enabled, getLoggedInUser()?.email);
   const themeMeta = document.querySelector('meta[name="theme-color"]');
   if (themeMeta) {
     themeMeta.setAttribute('content', enabled ? '#121212' : '#7AB66E');
@@ -185,11 +254,11 @@ let lastQuickChatMatch = '';
 let displayedFriends = [];
 
 function getSavedGoogleFriends() {
-    return JSON.parse(localStorage.getItem(FRIENDS_STORAGE_KEY)) || [];
+    return getStoredValue(FRIENDS_STORAGE_KEY, []);
 }
 
 function saveGoogleFriends(friends) {
-    localStorage.setItem(FRIENDS_STORAGE_KEY, JSON.stringify(friends));
+    setStoredValue(FRIENDS_STORAGE_KEY, friends);
 }
 
 function getLoggedInUser() {
@@ -378,6 +447,7 @@ function handleCredentialResponse(response) {
     };
 
     localStorage.setItem('ecoUser', JSON.stringify(userObj));
+    loadUserState(data.email);
     // An sheets melden
     fetch(WEB_APP_URL, {
         method: "POST",
@@ -492,12 +562,12 @@ document.addEventListener('keydown', function(e) {
 // ===== ENDE CHAT FUNKTIONALITÄT =====
 
 // ===== STREAK COUNTER MANAGEMENT =====
-let streakData = JSON.parse(localStorage.getItem('streakData')) || {
+let streakData = getStoredValue('streakData', {
     count: 0,
     lastUpdated: null,
     lastUpdateDate: null,
     completedToday: false
-};
+});
 
 function getToday() {
     const today = new Date();
@@ -546,7 +616,7 @@ function initializeStreakCounter() {
 }
 
 function saveStreakData() {
-    localStorage.setItem('streakData', JSON.stringify(streakData));
+    setStoredValue('streakData', streakData);
 }
 
 function incrementStreak() {
@@ -580,15 +650,15 @@ function displayStreak() {
 // ===== ENDE STREAK COUNTER MANAGEMENT =====
 
 // ===== POINTS MANAGEMENT =====
-let userPoints = JSON.parse(localStorage.getItem('userPoints')) || {
+let userPoints = getStoredValue('userPoints', {
     total: 0,
     completedTasks: []
-};
+});
 
 const POINTS_STORAGE_KEY = 'userPoints';
 
 function savePoints() {
-    localStorage.setItem(POINTS_STORAGE_KEY, JSON.stringify(userPoints));
+    setStoredValue(POINTS_STORAGE_KEY, userPoints);
 }
 
 function addPoints(amount, taskName) {
@@ -632,7 +702,7 @@ function updatePointsDisplay() {
 // Task management
 let allTasks = { weekly: [], daily: [] };
 let currentTask = null;
-let acceptedTasks = JSON.parse(localStorage.getItem('acceptedTasks')) || [];
+let acceptedTasks = getStoredValue('acceptedTasks', []);
 let taskCard = null;
 let swipeStartX = 0;
 let swipeCurrentX = 0;
@@ -1006,7 +1076,7 @@ function loadDailyTask() {
 
     // Prüfen ob heute schon eine Challenge gestartet wurde
     const todayKey = getTodayKey();
-    const lastDailyChallenge = localStorage.getItem('ecoLastDailyChallengeDate');
+    const lastDailyChallenge = getStoredValue('ecoLastDailyChallengeDate', null);
     
     if (lastDailyChallenge !== todayKey) {
         // Neuer Tag - neue Challenge anzeigen
@@ -1302,7 +1372,7 @@ document.addEventListener('DOMContentLoaded', () => {
             saveAcceptedTasks();
             
             // Speichern dass heute eine Challenge gestartet wurde
-            localStorage.setItem('ecoLastDailyChallengeDate', todayKey);
+            setStoredValue('ecoLastDailyChallengeDate', todayKey);
             
             // UI aktualisieren
             displayDailyChallenge(dailyTask, true);
@@ -1317,8 +1387,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     observeStatsAnimation();
 
-    const savedDarkMode = localStorage.getItem('ecoDarkMode') === '1';
-    initializeDarkMode(savedDarkMode);
+    const savedDarkMode = getStoredValue('ecoDarkMode', false);
+    initializeDarkMode(savedDarkMode === true || savedDarkMode === '1');
 });
 
 function updateTimer() {
@@ -1510,6 +1580,9 @@ function logout() {
     // Sign out from Google
     google.accounts.id.disableAutoSelect();
     
+    // Reset in-memory state for the signed-out user
+    resetUserState();
+    
     // Disable logout button and show Google sign-in button
     let loginBtn = document.querySelector('.g_id_signin');
     let logoutBtn = document.getElementById('logoutBtn');
@@ -1541,7 +1614,9 @@ document.addEventListener('DOMContentLoaded', () => {
     
     const savedUser = localStorage.getItem('ecoUser')
     if (savedUser) {
-        renderProfile(JSON.parse(savedUser))
+        const user = JSON.parse(savedUser);
+        loadUserState(user.email);
+        renderProfile(user);
     }
     
     // Initialize points display
