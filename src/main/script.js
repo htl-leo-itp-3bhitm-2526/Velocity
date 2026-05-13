@@ -585,76 +585,10 @@ let userPoints = JSON.parse(localStorage.getItem('userPoints')) || {
     completedTasks: []
 };
 
-const LEVEL_TIERS = [
-    { level: 1, title: 'Green Seed', icon: 'fas fa-seedling', minPoints: 0 },
-    { level: 2, title: 'Leaf Starter', icon: 'fas fa-leaf', minPoints: 100 },
-    { level: 3, title: 'Forest Walker', icon: 'fas fa-tree', minPoints: 250 },
-    { level: 4, title: 'Recycle Rider', icon: 'fas fa-recycle', minPoints: 450 },
-    { level: 5, title: 'Eco Champion', icon: 'fas fa-award', minPoints: 700 },
-    { level: 6, title: 'Planet Guardian', icon: 'fas fa-globe', minPoints: 1000 },
-    { level: 7, title: 'Legend of Earth', icon: 'fas fa-crown', minPoints: 1500 }
-];
-
 const POINTS_STORAGE_KEY = 'userPoints';
 
 function savePoints() {
     localStorage.setItem(POINTS_STORAGE_KEY, JSON.stringify(userPoints));
-}
-
-function getLevelInfo(totalPoints) {
-    const currentLevelIndex = LEVEL_TIERS.findIndex((tier, index) => {
-        const nextTier = LEVEL_TIERS[index + 1];
-        return totalPoints >= tier.minPoints && (!nextTier || totalPoints < nextTier.minPoints);
-    });
-
-    const safeIndex = currentLevelIndex === -1 ? 0 : currentLevelIndex;
-    const currentTier = LEVEL_TIERS[safeIndex];
-    const nextTier = LEVEL_TIERS[safeIndex + 1] || null;
-    const currentMin = currentTier.minPoints;
-    const nextMin = nextTier ? nextTier.minPoints : currentMin;
-    const progress = nextTier ? Math.max(0, Math.min(100, ((totalPoints - currentMin) / (nextMin - currentMin)) * 100)) : 100;
-
-    return {
-        level: currentTier.level,
-        title: currentTier.title,
-        icon: currentTier.icon,
-        currentMin,
-        nextMin,
-        nextTitle: nextTier ? nextTier.title : 'Max Level',
-        nextIcon: nextTier ? nextTier.icon : currentTier.icon,
-        progress,
-        isMaxLevel: !nextTier
-    };
-}
-
-function renderLevelSystem() {
-    const levelInfo = getLevelInfo(userPoints.total);
-    const levelEl = document.getElementById('profile-level');
-    const levelTitleEl = document.getElementById('profile-level-title');
-    const progressFillEl = document.getElementById('level-progress-fill');
-    const progressTextEl = document.getElementById('level-progress-text');
-    const iconTrackEl = document.getElementById('level-icon-track');
-
-    if (levelEl) levelEl.textContent = `Level ${levelInfo.level}`;
-    if (levelTitleEl) levelTitleEl.textContent = levelInfo.title;
-    if (progressFillEl) progressFillEl.style.width = `${levelInfo.progress}%`;
-    if (progressTextEl) {
-        progressTextEl.textContent = levelInfo.isMaxLevel
-            ? `${userPoints.total} XP - Max Level erreicht`
-            : `${userPoints.total} / ${levelInfo.nextMin} XP bis ${levelInfo.nextTitle}`;
-    }
-
-    if (iconTrackEl) {
-        iconTrackEl.innerHTML = LEVEL_TIERS.map(tier => {
-            const state = tier.level < levelInfo.level ? 'unlocked' : tier.level === levelInfo.level ? 'current' : 'locked';
-            return `
-                <div class="level-icon ${state}" title="Level ${tier.level}: ${tier.title} (${tier.minPoints}+ XP)">
-                    <i class="${tier.icon}"></i>
-                    <span>${tier.level}</span>
-                </div>
-            `;
-        }).join('');
-    }
 }
 
 function addPoints(amount, taskName) {
@@ -691,132 +625,9 @@ function updatePointsDisplay() {
     if (pointsEl) {
         pointsEl.textContent = userPoints.total;
     }
-    renderLevelSystem();
 }
 
 // ===== ENDE POINTS MANAGEMENT =====
-
-// ===== BADGE MANAGEMENT =====
-const BADGES_STORAGE_KEY = 'userBadges';
-
-const BADGE_DEFINITIONS = [
-    { id: 'first_upload', name: 'Erstes Abenteuer', icon: 'fas fa-star', description: '1 Beweis hochgeladen', threshold: 1, color: '#FFB84D' },
-    { id: 'eco_warrior', name: 'Eco Warrior', icon: 'fas fa-leaf', description: '5 Beweise hochgeladen', threshold: 5, color: '#7AB66E' },
-    { id: 'sustainability_master', name: 'Nachhaltigkeits-Meister', icon: 'fas fa-crown', description: '10 Beweise hochgeladen', threshold: 10, color: '#FFD700' },
-    { id: 'green_legend', name: 'Green Legend', icon: 'fas fa-trophy', description: '25 Beweise hochgeladen', threshold: 25, color: '#9370DB' },
-    { id: 'planet_savior', name: 'Planet Retter', icon: 'fas fa-globe', description: '50 Beweise hochgeladen', threshold: 50, color: '#FF6B6B' }
-];
-
-function getUserBadges() {
-    return JSON.parse(localStorage.getItem(BADGES_STORAGE_KEY)) || [];
-}
-
-function saveUserBadges(badges) {
-    localStorage.setItem(BADGES_STORAGE_KEY, JSON.stringify(badges));
-}
-
-function getUploadCount() {
-    return acceptedTasks.filter(task => task.proofUploadedAt).length;
-}
-
-function checkAndAwardBadges() {
-    const uploadCount = getUploadCount();
-    const userBadges = getUserBadges();
-    let newBadgesAwarded = [];
-    
-    BADGE_DEFINITIONS.forEach(badgeDef => {
-        if (uploadCount >= badgeDef.threshold) {
-            const hasBadge = userBadges.some(badge => badge.id === badgeDef.id);
-            if (!hasBadge) {
-                const newBadge = {
-                    id: badgeDef.id,
-                    name: badgeDef.name,
-                    icon: badgeDef.icon,
-                    description: badgeDef.description,
-                    awardedAt: new Date().toISOString(),
-                    color: badgeDef.color
-                };
-                userBadges.push(newBadge);
-                newBadgesAwarded.push(newBadge);
-            }
-        }
-    });
-    
-    saveUserBadges(userBadges);
-    
-    // Show toast notification for each new badge
-    newBadgesAwarded.forEach(badge => {
-        showBadgeToast(badge);
-    });
-    
-    renderBadges();
-}
-
-function renderBadges() {
-    const badgeContainer = document.getElementById('badge-container');
-    if (!badgeContainer) return;
-    
-    const userBadges = getUserBadges();
-    const uploadCount = getUploadCount();
-    
-    badgeContainer.innerHTML = '';
-    
-    // Render earned badges
-    userBadges.forEach(badge => {
-        const badgeEl = document.createElement('div');
-        badgeEl.className = 'badge-icon earned';
-        badgeEl.style.color = badge.color;
-        badgeEl.title = `${badge.name}: ${badge.description}`;
-        badgeEl.innerHTML = `<i class="${badge.icon}"></i>`;
-        badgeContainer.appendChild(badgeEl);
-    });
-    
-    // Show next available badge
-    const nextBadge = BADGE_DEFINITIONS.find(b => uploadCount < b.threshold && !userBadges.some(ub => ub.id === b.id));
-    if (nextBadge) {
-        const progress = uploadCount / nextBadge.threshold;
-        const nextBadgeEl = document.createElement('div');
-        nextBadgeEl.className = 'badge-icon locked';
-        nextBadgeEl.style.opacity = '0.4';
-        nextBadgeEl.title = `${nextBadge.name}: ${nextBadge.description} (${uploadCount}/${nextBadge.threshold})`;
-        nextBadgeEl.innerHTML = `<i class="${nextBadge.icon}" style="font-size: 0.8em;"></i><span class="badge-progress">${uploadCount}/${nextBadge.threshold}</span>`;
-        badgeContainer.appendChild(nextBadgeEl);
-    }
-}
-
-function showBadgeToast(badge) {
-    const toastContainer = document.getElementById('toast-container');
-    if (!toastContainer) return;
-    
-    const toast = document.createElement('div');
-    toast.className = 'badge-toast';
-    toast.style.borderLeftColor = badge.color;
-    toast.innerHTML = `
-        <div class="badge-toast-content">
-            <div class="badge-toast-icon" style="color: ${badge.color};">
-                <i class="${badge.icon}"></i>
-            </div>
-            <div class="badge-toast-text">
-                <div class="badge-toast-title">🎉 Neues Badge!</div>
-                <div class="badge-toast-name">${badge.name}</div>
-                <div class="badge-toast-desc">${badge.description}</div>
-            </div>
-        </div>
-    `;
-    
-    toastContainer.appendChild(toast);
-    
-    // Trigger animation
-    setTimeout(() => toast.classList.add('show'), 10);
-    
-    // Remove after 4 seconds
-    setTimeout(() => {
-        toast.classList.remove('show');
-        setTimeout(() => toast.remove(), 300);
-    }, 4000);
-}
-
-// ===== ENDE BADGE MANAGEMENT =====
 
 // Task management
 let allTasks = { weekly: [], daily: [] };
@@ -844,12 +655,63 @@ function saveAcceptedTasks() {
     localStorage.setItem('acceptedTasks', JSON.stringify(acceptedTasks));
 }
 
+function removeEvidence(uploadId) {
+    // Parse uploadId to find the corresponding task and image index
+    // uploadId format: "taskName_index_timestamp"
+    const parts = uploadId.split('_');
+    if (parts.length < 3) return;
+
+    const taskName = parts.slice(0, -2).join('_'); // Everything except last 2 parts
+    const imageIndex = parseInt(parts[parts.length - 2]);
+    const timestamp = parts[parts.length - 1];
+
+    // Find the task
+    const taskIndex = acceptedTasks.findIndex(task => 
+        task.task === taskName && task.proofUploadedAt === timestamp
+    );
+
+    if (taskIndex === -1) return;
+
+    const task = acceptedTasks[taskIndex];
+    if (!task.proofFileDatas || task.proofFileDatas.length <= imageIndex) return;
+
+    // Remove the specific image
+    task.proofFileDatas.splice(imageIndex, 1);
+    if (task.proofFileNames && task.proofFileNames.length > imageIndex) {
+        task.proofFileNames.splice(imageIndex, 1);
+    }
+
+    // If no images left, remove the upload timestamp
+    if (task.proofFileDatas.length === 0) {
+        delete task.proofUploadedAt;
+        delete task.proofFileNames;
+        delete task.proofFileDatas;
+    }
+
+    saveAcceptedTasks();
+    loadRecentUploads();
+}
+
 function loadRecentUploads() {
-    // Filter tasks with proof uploads, sort by upload date descending, take first 3
-    const uploads = acceptedTasks
-        .filter(task => task.proofFileData && task.proofUploadedAt)
-        .sort((a, b) => new Date(b.proofUploadedAt) - new Date(a.proofUploadedAt))
-        .slice(0, 3);
+    // Collect all uploaded images from all tasks
+    const allUploads = [];
+    acceptedTasks.forEach(task => {
+        if (task.proofFileDatas && task.proofUploadedAt) {
+            task.proofFileDatas.forEach((data, index) => {
+                allUploads.push({
+                    data: data,
+                    name: task.proofFileNames ? task.proofFileNames[index] : 'Upload',
+                    task: task.task,
+                    uploadedAt: task.proofUploadedAt,
+                    id: `${task.task}_${index}_${task.proofUploadedAt}`
+                });
+            });
+        }
+    });
+
+    // Sort by upload date descending, take first 3
+    allUploads.sort((a, b) => new Date(b.uploadedAt) - new Date(a.uploadedAt));
+    const recentUploads = allUploads.slice(0, 3);
 
     const proofGallery = document.querySelector('.proof-gallery');
     if (!proofGallery) return;
@@ -857,26 +719,45 @@ function loadRecentUploads() {
     // Clear existing items
     proofGallery.innerHTML = '';
 
-    if (uploads.length === 0) {
-        // Show placeholder if no uploads
+    if (recentUploads.length === 0) {
+        // Show central empty state box
         proofGallery.innerHTML = `
-            <div class="proof-item">
-                <img src="https://via.placeholder.com/80/7AB66E/ffffff?text=Kein+Upload" alt="No uploads yet">
-                <span class="proof-user">Noch keine Beweise</span>
+            <div class="proof-empty-state">
+                <div class="proof-empty-icon">
+                    <i class="fas fa-image"></i>
+                </div>
+                <div class="proof-empty-message">Keine Beweise vorhanden</div>
+                <div class="proof-empty-subtitle">Füge ein Bild zu deinen Challenges hinzu</div>
             </div>
         `;
         return;
     }
 
-    // Add recent uploads
-    uploads.forEach(upload => {
+    // Add recent uploads as miniatures
+    recentUploads.forEach(upload => {
         const item = document.createElement('div');
-        item.className = 'proof-item';
+        item.className = 'proof-miniature';
         item.innerHTML = `
-            <img src="${upload.proofFileData}" alt="User upload">
-            <span class="proof-user">${upload.task}</span>
+            <div class="proof-miniature-container">
+                <img src="${upload.data}" alt="User upload" class="proof-miniature-img">
+                <button class="proof-remove-btn" data-upload-id="${upload.id}" title="Entfernen">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
         `;
         proofGallery.appendChild(item);
+    });
+
+    // Add event listeners for remove buttons
+    proofGallery.addEventListener('click', function(e) {
+        const removeBtn = e.target.closest('.proof-remove-btn');
+        if (removeBtn) {
+            e.preventDefault();
+            const uploadId = removeBtn.getAttribute('data-upload-id');
+            if (uploadId) {
+                removeEvidence(uploadId);
+            }
+        }
     });
 }
 
@@ -938,12 +819,12 @@ function renderTodayChallenges() {
 
     list.innerHTML = todayTasks.map((task, index) => {
         const challengeKey = getAcceptedTaskKey(task);
-        const uploadState = task.proofFileName
-            ? `<p class="today-proof-state uploaded"><i class="fas fa-check-circle"></i> Beweis hochgeladen: ${escapeHtmlText(task.proofFileName)}</p>`
+        const uploadState = task.proofFileNames && task.proofFileNames.length > 0
+            ? `<p class="today-proof-state uploaded"><i class="fas fa-check-circle"></i> ${task.proofFileNames.length} Beweis${task.proofFileNames.length > 1 ? 'e' : ''} hochgeladen</p>`
             : '<p class="today-proof-state"><i class="fas fa-image"></i> Noch kein Beweis hochgeladen</p>';
         
-        const proofImage = task.proofFileData 
-            ? `<div class="today-proof-image-container"><img src="${task.proofFileData}" alt="Beweis-Foto" class="today-proof-image"></div>`
+        const proofImage = task.proofFileDatas && task.proofFileDatas.length > 0
+            ? `<div class="today-proof-image-container">${task.proofFileDatas.map(data => `<img src="${data}" alt="Beweis-Foto" class="today-proof-image">`).join('')}</div>`
             : '';
 
         const uploadButton = task.isCompleted
@@ -970,7 +851,7 @@ function renderTodayChallenges() {
 
         const proofInput = task.isCompleted
             ? ''
-            : `<input class="today-challenge-upload-input" type="file" accept="image/*" data-challenge-index="${index}" data-challenge-key="${escapeHtmlText(challengeKey)}">`;
+            : `<input class="today-challenge-upload-input" type="file" accept="image/*" multiple data-challenge-index="${index}" data-challenge-key="${escapeHtmlText(challengeKey)}">`;
 
         // Display correct points from task
         const displayPoints = task.points || 50;
@@ -1010,12 +891,16 @@ function renderTodayChallenges() {
     }).join('');
 }
 
-function saveProofUpload(challengeKey, fileName, fileData) {
+function saveProofUpload(challengeKey, fileNames, fileDatas) {
     const taskIndex = acceptedTasks.findIndex(task => getAcceptedTaskKey(task) === challengeKey);
     if (taskIndex === -1) return;
 
-    acceptedTasks[taskIndex].proofFileName = fileName;
-    acceptedTasks[taskIndex].proofFileData = fileData; // Speichere die Bilddaten als Data URL
+    // Ensure arrays
+    if (!Array.isArray(fileNames)) fileNames = [fileNames];
+    if (!Array.isArray(fileDatas)) fileDatas = [fileDatas];
+
+    acceptedTasks[taskIndex].proofFileNames = fileNames;
+    acceptedTasks[taskIndex].proofFileDatas = fileDatas; // Speichere die Bilddaten als Data URLs
     acceptedTasks[taskIndex].proofUploadedAt = new Date().toISOString();
     saveAcceptedTasks();
     loadRecentUploads(); // Update recent uploads display
@@ -1026,7 +911,7 @@ function confirmTaskProof(challengeKey) {
     if (taskIndex === -1) return;
 
     const task = acceptedTasks[taskIndex];
-    if (!task.proofFileData || task.isCompleted) return;
+    if (!task.proofFileDatas || task.proofFileDatas.length === 0 || task.isCompleted) return;
 
     task.isCompleted = true;
     task.status = 'completed';
@@ -1056,9 +941,6 @@ function confirmTaskProof(challengeKey) {
     if (task.isDaily) {
         incrementStreak();
     }
-
-    // Check and award badges
-    checkAndAwardBadges();
 
     saveAcceptedTasks();
     renderTodayChallenges();
@@ -1580,19 +1462,29 @@ document.addEventListener('change', function(e) {
     const uploadInput = e.target.closest('.today-challenge-upload-input');
     if (!uploadInput) return;
 
-    const file = uploadInput.files && uploadInput.files[0];
-    if (!file) return;
+    const files = uploadInput.files;
+    if (!files || files.length === 0) return;
 
     const challengeKey = uploadInput.getAttribute('data-challenge-key') || '';
     
-    // Bild als Data URL lesen für Vorschau
-    const reader = new FileReader();
-    reader.onload = function(event) {
-        const fileData = event.target.result; // Data URL des Bildes
-        saveProofUpload(challengeKey, file.name, fileData);
-        renderTodayChallenges();
-    };
-    reader.readAsDataURL(file);
+    const fileNames = [];
+    const fileDatas = [];
+    let loadedCount = 0;
+
+    for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            fileNames.push(file.name);
+            fileDatas.push(event.target.result); // Data URL des Bildes
+            loadedCount++;
+            if (loadedCount === files.length) {
+                saveProofUpload(challengeKey, fileNames, fileDatas);
+                renderTodayChallenges();
+            }
+        };
+        reader.readAsDataURL(file);
+    }
 });
 
 function renderProfile(user) {
@@ -1609,10 +1501,6 @@ function renderProfile(user) {
     if (locationEl) locationEl.textContent = user.email
     if (loginBtn) loginBtn.style.display = 'none';
     if (logoutBtn) logoutBtn.disabled = false;
-    
-    // Render badges
-    updatePointsDisplay();
-    renderBadges();
 }
 
 function logout() {
@@ -1658,9 +1546,6 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Initialize points display
     updatePointsDisplay();
-    
-    // Initialize badges display
-    renderBadges();
 })
 
 window.onload = () => {
