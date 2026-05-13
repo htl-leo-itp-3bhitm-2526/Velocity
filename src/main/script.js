@@ -585,10 +585,76 @@ let userPoints = JSON.parse(localStorage.getItem('userPoints')) || {
     completedTasks: []
 };
 
+const LEVEL_TIERS = [
+    { level: 1, title: 'Green Seed', icon: 'fas fa-seedling', minPoints: 0 },
+    { level: 2, title: 'Leaf Starter', icon: 'fas fa-leaf', minPoints: 100 },
+    { level: 3, title: 'Forest Walker', icon: 'fas fa-tree', minPoints: 250 },
+    { level: 4, title: 'Recycle Rider', icon: 'fas fa-recycle', minPoints: 450 },
+    { level: 5, title: 'Eco Champion', icon: 'fas fa-award', minPoints: 700 },
+    { level: 6, title: 'Planet Guardian', icon: 'fas fa-globe', minPoints: 1000 },
+    { level: 7, title: 'Legend of Earth', icon: 'fas fa-crown', minPoints: 1500 }
+];
+
 const POINTS_STORAGE_KEY = 'userPoints';
 
 function savePoints() {
     localStorage.setItem(POINTS_STORAGE_KEY, JSON.stringify(userPoints));
+}
+
+function getLevelInfo(totalPoints) {
+    const currentLevelIndex = LEVEL_TIERS.findIndex((tier, index) => {
+        const nextTier = LEVEL_TIERS[index + 1];
+        return totalPoints >= tier.minPoints && (!nextTier || totalPoints < nextTier.minPoints);
+    });
+
+    const safeIndex = currentLevelIndex === -1 ? 0 : currentLevelIndex;
+    const currentTier = LEVEL_TIERS[safeIndex];
+    const nextTier = LEVEL_TIERS[safeIndex + 1] || null;
+    const currentMin = currentTier.minPoints;
+    const nextMin = nextTier ? nextTier.minPoints : currentMin;
+    const progress = nextTier ? Math.max(0, Math.min(100, ((totalPoints - currentMin) / (nextMin - currentMin)) * 100)) : 100;
+
+    return {
+        level: currentTier.level,
+        title: currentTier.title,
+        icon: currentTier.icon,
+        currentMin,
+        nextMin,
+        nextTitle: nextTier ? nextTier.title : 'Max Level',
+        nextIcon: nextTier ? nextTier.icon : currentTier.icon,
+        progress,
+        isMaxLevel: !nextTier
+    };
+}
+
+function renderLevelSystem() {
+    const levelInfo = getLevelInfo(userPoints.total);
+    const levelEl = document.getElementById('profile-level');
+    const levelTitleEl = document.getElementById('profile-level-title');
+    const progressFillEl = document.getElementById('level-progress-fill');
+    const progressTextEl = document.getElementById('level-progress-text');
+    const iconTrackEl = document.getElementById('level-icon-track');
+
+    if (levelEl) levelEl.textContent = `Level ${levelInfo.level}`;
+    if (levelTitleEl) levelTitleEl.textContent = levelInfo.title;
+    if (progressFillEl) progressFillEl.style.width = `${levelInfo.progress}%`;
+    if (progressTextEl) {
+        progressTextEl.textContent = levelInfo.isMaxLevel
+            ? `${userPoints.total} XP - Max Level erreicht`
+            : `${userPoints.total} / ${levelInfo.nextMin} XP bis ${levelInfo.nextTitle}`;
+    }
+
+    if (iconTrackEl) {
+        iconTrackEl.innerHTML = LEVEL_TIERS.map(tier => {
+            const state = tier.level < levelInfo.level ? 'unlocked' : tier.level === levelInfo.level ? 'current' : 'locked';
+            return `
+                <div class="level-icon ${state}" title="Level ${tier.level}: ${tier.title} (${tier.minPoints}+ XP)">
+                    <i class="${tier.icon}"></i>
+                    <span>${tier.level}</span>
+                </div>
+            `;
+        }).join('');
+    }
 }
 
 function addPoints(amount, taskName) {
@@ -625,6 +691,7 @@ function updatePointsDisplay() {
     if (pointsEl) {
         pointsEl.textContent = userPoints.total;
     }
+    renderLevelSystem();
 }
 
 // ===== ENDE POINTS MANAGEMENT =====
@@ -1544,6 +1611,7 @@ function renderProfile(user) {
     if (logoutBtn) logoutBtn.disabled = false;
     
     // Render badges
+    updatePointsDisplay();
     renderBadges();
 }
 
