@@ -228,6 +228,10 @@ body.dark-mode .sidebar {
     background-color: #121212;
 }
 
+body.dark-mode .today-challenge-card.is-daily-challenge {
+    border-left-color: #FF8C42;
+}
+
 body.dark-mode .sidebar-header {
     background-color: #1d1d1d;
 }
@@ -3079,6 +3083,26 @@ h1 { color: #4a7c44; font-size: 1.2rem; margin-bottom: 15px; }
     margin: 0;
     border-radius: 22px;
     padding: 1.6rem;
+}
+
+.today-challenge-card.is-daily-challenge {
+    border-left: 4px solid #FF8C42;
+}
+
+.streak-badge-label {
+    background: rgba(255, 140, 66, 0.15);
+    color: #FF8C42;
+    border: 1px solid rgba(255, 140, 66, 0.3);
+    padding: 0.35rem 0.75rem;
+    border-radius: 15px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    white-space: nowrap;
 }
 
 .today-challenge-accepted-btn {

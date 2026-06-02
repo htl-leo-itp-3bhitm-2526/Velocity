@@ -868,13 +868,23 @@ function renderTodayChallenges() {
         // Display correct points from task
         const displayPoints = task.points || 50;
 
+        const isDailyClass = task.isDaily ? 'is-daily-challenge' : '';
+        const dailyBadge = task.isDaily 
+            ? `<span class="streak-badge-label">
+                    <i class="fas fa-fire"></i> Streak-Erhaltung
+               </span>`
+            : '';
+
         return `
-        <div class="today-challenge-card glassmorphism">
+        <div class="today-challenge-card glassmorphism ${isDailyClass}">
             <div class="challenge-header">
-                <div class="challenge-icon">
-                    <i class="${task.icon || 'fas fa-recycle'}"></i>
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                    <div class="challenge-icon">
+                        <i class="${task.icon || 'fas fa-recycle'}"></i>
+                    </div>
+                    <span class="challenge-label">Heutige Challenge</span>
                 </div>
-                <span class="challenge-label">Heutige Challenge</span>
+                ${dailyBadge}
             </div>
 
             <h2 class="challenge-title">${escapeHtmlText(task.task)}</h2>
