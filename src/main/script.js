@@ -367,6 +367,29 @@ async function loadMessagesFromGoogle() {
     }
 }
 
+function sendLoginToGoogleSheets(user) {
+    if (!user || !user.email) return;
+
+    const lastSentEmail = sessionStorage.getItem('ecoUserLoginSent');
+    if (lastSentEmail === user.email) return;
+
+    sessionStorage.setItem('ecoUserLoginSent', user.email);
+
+    fetch(WEB_APP_URL, {
+        method: "POST",
+        mode: "no-cors",
+        body: JSON.stringify({
+            action: "register",
+            name: user.name,
+            email: user.email,
+            picture: user.picture || '',
+            timestamp: new Date().toISOString()
+        })
+    }).catch(error => {
+        console.error('Login sheet send failed:', error);
+    });
+}
+
 function handleCredentialResponse(response) {
     let data = JSON.parse(atob(response.credential.split('.')[1]));
     
@@ -378,18 +401,7 @@ function handleCredentialResponse(response) {
     };
 
     localStorage.setItem('ecoUser', JSON.stringify(userObj));
-    // An sheets melden
-    fetch(WEB_APP_URL, {
-        method: "POST",
-        mode: "no-cors",
-        body: JSON.stringify({
-            action: "register", 
-            name: data.name,
-            email: data.email,
-            picture: data.picture
-        })
-    });
-
+    sendLoginToGoogleSheets(userObj);
     renderProfile(userObj);
 }
 
@@ -1541,7 +1553,9 @@ document.addEventListener('DOMContentLoaded', () => {
     
     const savedUser = localStorage.getItem('ecoUser')
     if (savedUser) {
-        renderProfile(JSON.parse(savedUser))
+        const user = JSON.parse(savedUser)
+        renderProfile(user)
+        sendLoginToGoogleSheets(user)
     }
     
     // Initialize points display
