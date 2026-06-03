@@ -2955,6 +2955,46 @@ h1 { color: #4a7c44; font-size: 1.2rem; margin-bottom: 15px; }
     margin: 0 auto;
 }
 
+#dailyChallengeCard {
+    border-left: 4px solid #FF8C42;
+    box-shadow: 0 16px 45px rgba(255, 140, 66, 0.16);
+}
+
+#dailyChallengeCard .challenge-header {
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+#dailyChallengeCard .challenge-icon {
+    background: linear-gradient(135deg, #FF8C42, #FFA95C);
+    box-shadow: 0 10px 30px rgba(255, 140, 66, 0.22);
+}
+
+#dailyChallengeCard .challenge-title {
+    color: #FF8C42;
+}
+
+#dailyChallengeCard .challenge-reward {
+    background: rgba(255, 140, 66, 0.08);
+}
+
+#dailyChallengeCard .reward-item {
+    color: #FF8C42;
+}
+
+#dailyChallengeCard .reward-item i {
+    color: #FF8C42;
+}
+
+#dailyChallengeCard .btn-primary {
+    background: linear-gradient(135deg, #FF8C42, #FFA95C);
+    box-shadow: 0 4px 15px rgba(255, 140, 66, 0.28);
+}
+
+#dailyChallengeCard .btn-primary:hover {
+    box-shadow: 0 6px 22px rgba(255, 140, 66, 0.4);
+}
+
 .glassmorphism {
     background: var(--surface-background);
     backdrop-filter: blur(10px);
