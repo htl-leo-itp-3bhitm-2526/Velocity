@@ -796,6 +796,92 @@ function removeTaskFromTaskSection(taskName) {
     });
 }
 
+function buildAcceptedTaskCard(task) {
+    const challengeKey = getAcceptedTaskKey(task);
+    const proofFileDatas = Array.isArray(task.proofFileDatas) ? task.proofFileDatas : [];
+    const proofFileNames = Array.isArray(task.proofFileNames) ? task.proofFileNames : [];
+    const isCompleted = Boolean(task.isCompleted);
+    const points = task.points || 0;
+
+    const uploadState = proofFileDatas.length > 0
+        ? `<p class="today-proof-state uploaded"><i class="fas fa-check-circle"></i> ${proofFileNames.length > 0 ? proofFileNames.length : proofFileDatas.length} Beweis${proofFileDatas.length > 1 ? 'e' : ''} hochgeladen</p>`
+        : '<p class="today-proof-state"><i class="fas fa-image"></i> Noch kein Beweis hochgeladen</p>';
+
+    const proofImage = proofFileDatas.length > 0
+        ? `<div class="today-proof-image-container">${proofFileDatas.map(data => `<img src="${data}" alt="Beweis-Foto" class="today-proof-image">`).join('')}</div>`
+        : '';
+
+    const uploadButton = isCompleted
+        ? ''
+        : `<button class="accepted-task-btn task-proof-upload-btn" type="button" data-task-key="${escapeHtmlText(challengeKey)}">
+                <i class="fas fa-upload"></i> Beweis hochladen
+           </button>`;
+
+    const confirmButton = proofFileDatas.length > 0 && !isCompleted
+        ? `<button class="accepted-task-btn task-proof-confirm-btn" type="button" data-task-key="${escapeHtmlText(challengeKey)}">
+                <i class="fas fa-check"></i> Punkte bestätigen
+           </button>`
+        : '';
+
+    const proofInput = isCompleted
+        ? ''
+        : `<input class="task-proof-upload-input" type="file" accept="image/*" multiple data-task-key="${escapeHtmlText(challengeKey)}">`;
+
+    const completionNotice = isCompleted
+        ? '<p class="today-proof-state completed"><i class="fas fa-check-circle"></i> Aufgabe abgeschlossen</p>'
+        : '';
+
+    return `
+        <div class="accepted-task-inner">
+            <div class="accepted-task-icon">
+                <i class="${task.icon || 'fas fa-check'}"></i>
+            </div>
+            <h3 class="accepted-task-title">${escapeHtmlText(task.task)}</h3>
+            <div class="accepted-task-proof-area">
+                ${proofImage}
+                ${uploadState}
+                ${completionNotice}
+                ${uploadButton}
+                ${proofInput}
+                ${confirmButton}
+            </div>
+            <div class="accepted-task-actions">
+                <span class="accepted-task-btn" role="note">
+                    <i class="fas fa-star"></i> ${points} Punkte warten auf Bestätigung
+                </span>
+            </div>
+        </div>
+    `;
+}
+
+function renderAcceptedTaskSection() {
+    const taskSection = document.getElementById('tasks');
+    if (!taskSection) return;
+
+    taskSection.querySelectorAll('.accepted-task-clone').forEach(clone => clone.remove());
+
+    acceptedTasks.forEach(task => {
+        const normalizedName = normalizeTaskName(task.task);
+        const taskCards = document.querySelectorAll('#tasks .task-card:not(.accepted-task-clone)');
+
+        taskCards.forEach(card => {
+            const titleText = card.querySelector('.task-title')?.textContent || '';
+            const buttonTask = card.querySelector('.task-accept-btn')?.getAttribute('data-task') || '';
+
+            if (normalizeTaskName(titleText) !== normalizedName && normalizeTaskName(buttonTask) !== normalizedName) {
+                return;
+            }
+
+            const clone = document.createElement('div');
+            clone.className = 'task-card task-card-accepted accepted-task-clone';
+            clone.setAttribute('data-task-key', getAcceptedTaskKey(task));
+            clone.innerHTML = buildAcceptedTaskCard(task);
+            card.insertAdjacentElement('afterend', clone);
+            card.style.display = 'none';
+        });
+    });
+}
+
 function restoreTaskInTaskSection(taskName) {
     const normalizedName = normalizeTaskName(taskName);
     const taskCards = document.querySelectorAll('#tasks .task-card[style*="display: none"]');
@@ -926,6 +1012,8 @@ function saveProofUpload(challengeKey, fileNames, fileDatas) {
     acceptedTasks[taskIndex].proofUploadedAt = new Date().toISOString();
     saveAcceptedTasks();
     loadRecentUploads(); // Update recent uploads display
+    renderDailyChallengeCard();
+    renderAcceptedTaskSection();
 }
 
 function confirmTaskProof(challengeKey) {
@@ -966,6 +1054,8 @@ function confirmTaskProof(challengeKey) {
 
     saveAcceptedTasks();
     renderTodayChallenges();
+    renderDailyChallengeCard();
+    renderAcceptedTaskSection();
 }
 
 function syncAcceptedTasksToUI() {
@@ -974,9 +1064,11 @@ function syncAcceptedTasksToUI() {
     allTaskCards.forEach(card => {
         card.style.display = '';
     });
+    document.querySelectorAll('#tasks .accepted-task-clone').forEach(clone => clone.remove());
     
     // Akzeptierte Aufgaben verstecken
     acceptedTasks.forEach(task => removeTaskFromTaskSection(task.task));
+    renderAcceptedTaskSection();
     
     // Laufende Challenges anzeigen
     renderTodayChallenges();
@@ -1023,30 +1115,30 @@ function hashCode(str) {
 
 // Load and display daily task
 function loadDailyTask() {
-    const dailyTask = getDailyTask();
-    if (!dailyTask) return;
-
-    // Prüfen ob heute schon eine Challenge gestartet wurde
-    const todayKey = getTodayKey();
-    const lastDailyChallenge = localStorage.getItem('ecoLastDailyChallengeDate');
-    
-    if (lastDailyChallenge !== todayKey) {
-        // Neuer Tag - neue Challenge anzeigen
-        displayDailyChallenge(dailyTask);
-    } else {
-        // Gleicher Tag - prüfen ob bereits akzeptiert
-        const existingTask = acceptedTasks.find(t => t.isDaily && t.acceptedDate.startsWith(todayKey));
-        if (existingTask) {
-            displayDailyChallenge(existingTask, true);
-        } else {
-            displayDailyChallenge(dailyTask);
-        }
-    }
+    renderDailyChallengeCard();
 }
 
 function getTodayKey() {
     const today = new Date();
     return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+}
+
+function getAcceptedDailyTaskForToday() {
+    const todayKey = getTodayKey();
+    return acceptedTasks.find(task => task.isDaily && task.acceptedDate && task.acceptedDate.startsWith(todayKey)) || null;
+}
+
+function renderDailyChallengeCard() {
+    const dailyTask = getDailyTask();
+    if (!dailyTask) return;
+
+    const acceptedDailyTask = getAcceptedDailyTaskForToday();
+    if (acceptedDailyTask) {
+        displayDailyChallenge(acceptedDailyTask, true);
+        return;
+    }
+
+    displayDailyChallenge(dailyTask, false);
 }
 
 // Display daily challenge in the card
@@ -1055,13 +1147,26 @@ function displayDailyChallenge(task, isAccepted = false) {
     const descEl = document.getElementById('dailyChallengeDesc');
     const iconEl = document.getElementById('dailyChallengeIcon');
     const btnEl = document.getElementById('startChallengeBtn');
+    const proofArea = document.getElementById('dailyChallengeProofArea');
+    const challengeKey = isAccepted ? getAcceptedTaskKey(task) : '';
+    const proofFileDatas = Array.isArray(task.proofFileDatas) ? task.proofFileDatas : [];
+    const proofFileNames = Array.isArray(task.proofFileNames) ? task.proofFileNames : [];
+    const isCompleted = Boolean(task.isCompleted);
 
     if (titleEl) titleEl.textContent = task.task;
-    if (descEl) descEl.textContent = "Erledige diese tägliche Aufgabe und verdiene dir Punkte!";
+    if (descEl) {
+        descEl.textContent = isAccepted
+            ? 'Lade jetzt ein Bild als Beweis hoch und bestätige die Tages-Challenge.'
+            : 'Erledige diese tägliche Aufgabe und verdiene dir Punkte!';
+    }
     if (iconEl && task.icon) iconEl.className = task.icon;
 
     if (btnEl) {
-        if (isAccepted) {
+        if (isCompleted) {
+            btnEl.innerHTML = '<i class="fas fa-check"></i> Abgeschlossen';
+            btnEl.disabled = true;
+            btnEl.classList.add('accepted');
+        } else if (isAccepted) {
             btnEl.innerHTML = '<i class="fas fa-check"></i> Akzeptiert';
             btnEl.disabled = true;
             btnEl.classList.add('accepted');
@@ -1071,6 +1176,50 @@ function displayDailyChallenge(task, isAccepted = false) {
             btnEl.classList.remove('accepted');
         }
     }
+
+    if (!proofArea) return;
+
+    if (!isAccepted) {
+        proofArea.innerHTML = '';
+        return;
+    }
+
+    const uploadState = proofFileDatas.length > 0
+        ? `<p class="today-proof-state uploaded"><i class="fas fa-check-circle"></i> ${proofFileNames.length > 0 ? proofFileNames.length : proofFileDatas.length} Beweis${proofFileDatas.length > 1 ? 'e' : ''} hochgeladen</p>`
+        : '<p class="today-proof-state"><i class="fas fa-image"></i> Noch kein Beweis hochgeladen</p>';
+
+    const proofImage = proofFileDatas.length > 0
+        ? `<div class="today-proof-image-container">${proofFileDatas.map(data => `<img src="${data}" alt="Beweis-Foto" class="today-proof-image">`).join('')}</div>`
+        : '';
+
+    const uploadButton = isCompleted
+        ? ''
+        : `<button class="btn-primary btn-challenge today-challenge-upload-btn daily-challenge-upload-btn" type="button" data-challenge-key="${escapeHtmlText(challengeKey)}">
+                <i class="fas fa-upload"></i> Beweis hochladen
+           </button>`;
+
+    const confirmButton = proofFileDatas.length > 0 && !isCompleted
+        ? `<button class="btn-primary btn-challenge today-challenge-confirm-btn daily-challenge-confirm-btn" type="button" data-challenge-key="${escapeHtmlText(challengeKey)}">
+                <i class="fas fa-check"></i> Hochladen bestätigen
+           </button>`
+        : '';
+
+    const proofInput = isCompleted
+        ? ''
+        : `<input class="today-challenge-upload-input daily-challenge-upload-input" type="file" accept="image/*" multiple id="dailyChallengeUploadInput" data-challenge-key="${escapeHtmlText(challengeKey)}">`;
+
+    const completionNotice = isCompleted
+        ? '<p class="today-proof-state completed"><i class="fas fa-check-circle"></i> Aufgabe abgeschlossen</p>'
+        : '';
+
+    proofArea.innerHTML = `
+        ${proofImage}
+        ${uploadState}
+        ${completionNotice}
+        ${uploadButton}
+        ${proofInput}
+        ${confirmButton}
+    `;
 }
 
 function showTaskDecisionFeedback(type) {
@@ -1327,7 +1476,7 @@ document.addEventListener('DOMContentLoaded', () => {
             localStorage.setItem('ecoLastDailyChallengeDate', todayKey);
             
             // UI aktualisieren
-            displayDailyChallenge(dailyTask, true);
+            renderDailyChallengeCard();
             renderTodayChallenges();
             
             console.log('Tägliche Challenge gestartet:', dailyTask.task);
@@ -1419,6 +1568,35 @@ setupTaskSwipe();
 
 // Handle task accept buttons
 document.addEventListener('click', function(e) {
+    const dailyUploadBtn = e.target.closest('.daily-challenge-upload-btn');
+    if (dailyUploadBtn) {
+        const input = document.getElementById('dailyChallengeUploadInput');
+        if (input) input.click();
+        return;
+    }
+
+    const dailyConfirmBtn = e.target.closest('.daily-challenge-confirm-btn');
+    if (dailyConfirmBtn) {
+        const challengeKey = dailyConfirmBtn.getAttribute('data-challenge-key');
+        if (challengeKey) confirmTaskProof(challengeKey);
+        return;
+    }
+
+    const taskUploadBtn = e.target.closest('.task-proof-upload-btn');
+    if (taskUploadBtn) {
+        const taskKey = taskUploadBtn.getAttribute('data-task-key');
+        const input = taskUploadBtn.closest('.accepted-task-clone')?.querySelector(`.task-proof-upload-input[data-task-key="${taskKey}"]`);
+        if (input) input.click();
+        return;
+    }
+
+    const taskConfirmBtn = e.target.closest('.task-proof-confirm-btn');
+    if (taskConfirmBtn) {
+        const taskKey = taskConfirmBtn.getAttribute('data-task-key');
+        if (taskKey) confirmTaskProof(taskKey);
+        return;
+    }
+
     const uploadBtn = e.target.closest('.today-challenge-upload-btn');
     if (uploadBtn) {
         const index = uploadBtn.getAttribute('data-challenge-index');
@@ -1441,6 +1619,7 @@ document.addEventListener('click', function(e) {
 
         if (isTaskAlreadyAccepted(taskName)) {
             removeTaskFromTaskSection(taskName);
+            renderAcceptedTaskSection();
             renderTodayChallenges();
             return;
         }
@@ -1473,14 +1652,66 @@ document.addEventListener('click', function(e) {
         // Save to localStorage
         saveAcceptedTasks();
 
-        // Nur Punkte bei Annahme — kein Streak mehr
-        
-        removeTaskFromTaskSection(taskName);
+        renderAcceptedTaskSection();
         renderTodayChallenges();
     }
 });
 
 document.addEventListener('change', function(e) {
+    const taskUploadInput = e.target.closest('.task-proof-upload-input');
+    if (taskUploadInput) {
+        const files = taskUploadInput.files;
+        if (!files || files.length === 0) return;
+
+        const challengeKey = taskUploadInput.getAttribute('data-task-key') || '';
+        const fileNames = [];
+        const fileDatas = [];
+        let loadedCount = 0;
+
+        for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                fileNames.push(file.name);
+                fileDatas.push(event.target.result);
+                loadedCount++;
+                if (loadedCount === files.length) {
+                    saveProofUpload(challengeKey, fileNames, fileDatas);
+                    renderAcceptedTaskSection();
+                }
+            };
+            reader.readAsDataURL(file);
+        }
+        return;
+    }
+
+    const dailyUploadInput = e.target.closest('.daily-challenge-upload-input');
+    if (dailyUploadInput) {
+        const files = dailyUploadInput.files;
+        if (!files || files.length === 0) return;
+
+        const challengeKey = dailyUploadInput.getAttribute('data-challenge-key') || '';
+        const fileNames = [];
+        const fileDatas = [];
+        let loadedCount = 0;
+
+        for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                fileNames.push(file.name);
+                fileDatas.push(event.target.result);
+                loadedCount++;
+                if (loadedCount === files.length) {
+                    saveProofUpload(challengeKey, fileNames, fileDatas);
+                    renderDailyChallengeCard();
+                }
+            };
+            reader.readAsDataURL(file);
+        }
+        return;
+    }
+
     const uploadInput = e.target.closest('.today-challenge-upload-input');
     if (!uploadInput) return;
 
