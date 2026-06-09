@@ -39,14 +39,17 @@ html, body {
     padding: 0;
     scroll-behavior: smooth;
     -webkit-overflow-scrolling: touch;
-    overscroll-behavior-y: none;
+    /* allow normal overscroll behavior so touchpad/mouse scrolling works */
+    overscroll-behavior-y: auto;
+    /* ensure touch/pointer input can scroll */
+    touch-action: auto;
 }
-⁠*⁠{   
+
+* {   
     margin: 0;
     padding: 0;
     box-sizing: border-box;
 }
-
 html {
     font-size: 16px;
 }
