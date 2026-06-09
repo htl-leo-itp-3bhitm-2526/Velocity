@@ -902,8 +902,7 @@ function renderTodayChallenges() {
 
     const today = getToday();
     const todayTasks = acceptedTasks.filter(task => {
-        if (task.isDaily) return false;
-        if (!task.acceptedDate) return false;
+        if (task.acceptedDate) return false;
         const acceptedDate = new Date(task.acceptedDate);
         if (Number.isNaN(acceptedDate.getTime())) return false;
 

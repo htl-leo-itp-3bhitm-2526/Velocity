@@ -293,9 +293,9 @@
         </div>
         <p class="friends-action-info" id="friends-action-info">Finde per Klick eine zufaellige Person fuer den Chat.</p>
         
-        <div class="search-bar-container" style="padding: 10px 0; display: flex; gap: 10px;">
-            <input type="email" id="friend-search-input" placeholder="E-Mail suchen..." style="flex-grow: 1; padding: 10px; border-radius: 20px; border: 1px solid #ccc; outline: none;">
-            <button onclick="addUserBySearch()" style="padding: 10px 20px; border-radius: 20px; background: #7AB66E; color: white; border: none; cursor: pointer;">
+        <div class="search-bar-container">
+            <input class="search-input" type="email" id="friend-search-input" placeholder="E-Mail suchen...">
+            <button class="search-button" onclick="addUserBySearch()">
                 <i class="fas fa-plus"></i>
             </button>
         </div>
@@ -305,7 +305,7 @@
     </div>
     
     <!-- Chat Modal -->
-    <div id="chat-modal" class="chat-modal" style="display: none;">
+    <div id="chat-modal" class="chat-modal">
         <div class="chat-modal-content">
             <button class="chat-close-btn" onclick="closeChatModal()">
                 <i class="fas fa-times"></i>

@@ -10,6 +10,9 @@
     --muted-text: #666;
     --light-gray: #e9ecef;
     --shadow: 0 0.125rem 0.5rem rgba(0, 0, 0, 0.1);
+    --surface-color: rgba(255, 255, 255, 0.92);
+    --card-border: rgba(122, 182, 110, 0.16);
+    --card-radius: 1.5rem;
     --transition: all 0.3s ease;
     
     /* Safe area insets for iPhone notch */
@@ -1927,7 +1930,7 @@ h1 { color: #4a7c44; font-size: 1.2rem; margin-bottom: 15px; }
     width: 100%;
     height: 100%;
     background: rgba(0, 0, 0, 0.5);
-    display: flex;
+    display: none;
     align-items: center;
     justify-content: center;
     z-index: 1000;
@@ -3102,6 +3105,68 @@ h1 { color: #4a7c44; font-size: 1.2rem; margin-bottom: 15px; }
 
 .btn-primary:active {
     transform: translateY(0);
+}
+
+.surface-card,
+.task-card,
+.challenge-card,
+.profile-card,
+.friends-main-card,
+.stats-counter,
+.timer-bar-container,
+.search-bar-container,
+.chat-modal-content,
+.today-challenges-panel,
+.stats-section,
+.badges-section {
+    background: var(--surface-color);
+    border: 1px solid var(--card-border);
+    border-radius: var(--card-radius);
+    box-shadow: 0 24px 40px rgba(0, 0, 0, 0.08);
+}
+
+.search-bar-container {
+    display: flex;
+    gap: 0.75rem;
+    padding: 1rem 0;
+    align-items: center;
+}
+
+.search-input {
+    flex: 1;
+    width: 100%;
+    min-width: 0;
+    padding: 0.95rem 1rem;
+    border-radius: 1.25rem;
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    background: #fff;
+    color: var(--text-color);
+    font-size: 1rem;
+    transition: var(--transition);
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 4px rgba(122, 182, 110, 0.12);
+}
+
+.search-button {
+    background: linear-gradient(135deg, var(--primary-color), var(--standOut-color));
+    color: white;
+    border: none;
+    border-radius: 1.25rem;
+    padding: 0.95rem 1.15rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: var(--transition);
+    box-shadow: 0 8px 20px rgba(122, 182, 110, 0.2);
+}
+
+.search-button:hover {
+    transform: translateY(-1px);
 }
 
 /* LOGOUT BUTTON */
