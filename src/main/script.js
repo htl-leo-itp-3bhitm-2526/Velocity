@@ -187,6 +187,83 @@ const appUsers = [
 let lastQuickChatMatch = '';
 let displayedFriends = [];
 
+const USERS_STORAGE_KEY = 'ecoUsers';
+const CHAT_LOG_KEY = 'ecoChatLog';
+
+function getLocalUsers() {
+    const localUsers = JSON.parse(localStorage.getItem(USERS_STORAGE_KEY)) || [];
+    const userMap = {};
+    [...googleUsers, ...localUsers].forEach(user => {
+        if (user && user.email) {
+            userMap[user.email.toLowerCase()] = {
+                name: user.name || getDisplayNameFromEmail(user.email),
+                email: user.email,
+                picture: user.picture || user.picture || '',
+                online: typeof user.online === 'boolean' ? user.online : false,
+                streak: user.streak || 0,
+                vibe: user.vibe || '',
+                points: user.points || 0
+            };
+        }
+    });
+    return Object.values(userMap);
+}
+
+function saveLocalUsers(users) {
+    localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(users));
+}
+
+function registerLocalUser(user) {
+    if (!user || !user.email) return;
+    const users = getLocalUsers();
+    const index = users.findIndex(u => u.email.toLowerCase() === user.email.toLowerCase());
+    if (index === -1) {
+        users.push({
+            name: user.name || getDisplayNameFromEmail(user.email),
+            email: user.email,
+            picture: user.picture || '',
+            online: true,
+            streak: user.streak || 0,
+            vibe: user.vibe || 'Neuer Freund',
+            points: user.points || 0
+        });
+    } else {
+        users[index] = {
+            ...users[index],
+            name: user.name || users[index].name,
+            picture: user.picture || users[index].picture,
+            online: true,
+            streak: user.streak != null ? user.streak : users[index].streak,
+            points: user.points != null ? user.points : users[index].points
+        };
+    }
+    saveLocalUsers(users);
+}
+
+function getChatLog() {
+    return JSON.parse(localStorage.getItem(CHAT_LOG_KEY)) || [];
+}
+
+function saveChatLog(entries) {
+    localStorage.setItem(CHAT_LOG_KEY, JSON.stringify(entries));
+}
+
+function addChatLogEntry(entry) {
+    const log = getChatLog();
+    log.push(entry);
+    saveChatLog(log);
+}
+
+function getChatLogConversation(userA, userB) {
+    const lowerA = normalizeEmail(userA);
+    const lowerB = normalizeEmail(userB);
+    return getChatLog().filter(message => {
+        const sender = normalizeEmail(message.sender);
+        const receiver = normalizeEmail(message.receiver);
+        return (sender === lowerA && receiver === lowerB) || (sender === lowerB && receiver === lowerA);
+    });
+}
+
 function getChatFriends() {
     return JSON.parse(localStorage.getItem(CHAT_FRIENDS_KEY)) || [];
 }
@@ -204,10 +281,13 @@ function saveFriendRequests(requests) {
 }
 
 function getFriendRequestsForUser(email) {
-    return getFriendRequests().filter(request => request.to === email && request.status === 'pending');
+    const normalizedEmail = normalizeEmail(email);
+    return getFriendRequests().filter(request => normalizeEmail(request.to) === normalizedEmail && request.status === 'pending');
 }
 
 function addFriendRequest(request) {
+    request.from = normalizeEmail(request.from);
+    request.to = normalizeEmail(request.to);
     const requests = getFriendRequests();
     requests.push(request);
     saveFriendRequests(requests);
@@ -226,6 +306,10 @@ function makeRequestId() {
     return `req_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 }
 
+function normalizeEmail(email) {
+    return String(email || '').trim().toLowerCase();
+}
+
 function isEmail(value) {
     return /.+@.+\..+/.test(value);
 }
@@ -235,7 +319,7 @@ function getDisplayNameFromEmail(email) {
 }
 
 function getConversationKey(userA, userB) {
-    return [userA, userB].sort().join('||');
+    return [normalizeEmail(userA), normalizeEmail(userB)].sort().join('||');
 }
 
 function getSavedChatMessages() {
@@ -256,43 +340,50 @@ function addLocalChatMessage(msgObj) {
 
 function getConversationMessages(friendEmail) {
     const ecoUser = getLoggedInUser();
-    if (!ecoUser) return [];
-    const messages = getSavedChatMessages();
-    return messages[getConversationKey(ecoUser.email, friendEmail)] || [];
+    if (!ecoUser || !friendEmail) return [];
+    return getChatLogConversation(ecoUser.email, friendEmail);
 }
 
 function getAllKnownUsers() {
     const savedFriends = getSavedGoogleFriends();
+    const localUsers = getLocalUsers();
+    const users = [...localUsers];
+
+    if (savedFriends.length > 0) {
+        savedFriends.forEach(friend => {
+            if (friend && friend.email && !users.some(user => normalizeEmail(user.email) === normalizeEmail(friend.email))) {
+                users.push(friend);
+            }
+        });
+    }
+
     const loggedInUser = getLoggedInUser();
-    const users = googleUsers.map(user => ({ ...user }));
-    if (loggedInUser && !users.some(user => user.email.toLowerCase() === loggedInUser.email.toLowerCase())) {
+    if (loggedInUser && !users.some(user => normalizeEmail(user.email) === normalizeEmail(loggedInUser.email))) {
         users.push({
             name: loggedInUser.name,
             email: loggedInUser.email,
             online: true,
             streak: 0,
             vibe: 'Du',
-            points: 0
+            points: 0,
+            picture: loggedInUser.picture || ''
         });
     }
-    savedFriends.forEach(friend => {
-        if (!users.some(user => user.email.toLowerCase() === friend.email.toLowerCase())) {
-            users.push(friend);
-        }
-    });
+
     return users;
 }
 
 function findRegisteredUser(identifier) {
     if (!identifier) return null;
-    const normalized = identifier.trim().toLowerCase();
+    const normalized = normalizeEmail(identifier);
     return getAllKnownUsers().find(user => {
-        return user.email?.toLowerCase() === normalized || user.name?.toLowerCase() === normalized;
+        return normalizeEmail(user.email) === normalized || user.name?.toLowerCase() === identifier.trim().toLowerCase();
     });
 }
 
 function isFriendWith(email) {
-    return getChatFriends().some(friend => friend.email.toLowerCase() === email.toLowerCase());
+    const normalizedEmail = normalizeEmail(email);
+    return getChatFriends().some(friend => normalizeEmail(friend.email) === normalizedEmail);
 }
 
 function getSavedGoogleFriends() {
@@ -314,12 +405,12 @@ function isGoogleLoggedIn() {
 
 function getAvailableGoogleUsers() {
     const availableUsers = getAllKnownUsers();
-    const friendEmails = getChatFriends().map(friend => friend.email.toLowerCase());
+    const friendEmails = getChatFriends().map(friend => normalizeEmail(friend.email));
     return availableUsers
-        .filter(user => user.email && user.email.toLowerCase() !== getLoggedInUser()?.email?.toLowerCase())
+        .filter(user => user.email && normalizeEmail(user.email) !== normalizeEmail(getLoggedInUser()?.email))
         .map(user => ({
             ...user,
-            isFriend: friendEmails.includes(user.email.toLowerCase())
+            isFriend: friendEmails.includes(normalizeEmail(user.email))
         }));
 }
 
@@ -330,13 +421,13 @@ function addGoogleFriend(email) {
     }
 
     const savedFriends = getSavedGoogleFriends();
-    const existing = savedFriends.find(friend => friend.email.toLowerCase() === email.toLowerCase());
+    const existing = savedFriends.find(friend => normalizeEmail(friend.email) === normalizeEmail(email));
     if (existing) {
         updateActionInfo(`${existing.name} ist bereits in deiner Kontaktliste.`);
         return;
     }
 
-    const user = getAllKnownUsers().find(user => user.email?.toLowerCase() === email.toLowerCase());
+    const user = getAllKnownUsers().find(user => normalizeEmail(user.email) === normalizeEmail(email));
     if (!user) return;
 
     savedFriends.push(user);
@@ -442,7 +533,7 @@ function handleFriendRequestAction(requestId, action) {
 
     if (action === 'accept') {
         const friends = getChatFriends();
-        if (!friends.some(friend => friend.email.toLowerCase() === request.from.toLowerCase())) {
+        if (!friends.some(friend => normalizeEmail(friend.email) === normalizeEmail(request.from))) {
             friends.push({
                 name: request.fromName,
                 email: request.from,
@@ -456,27 +547,29 @@ function handleFriendRequestAction(requestId, action) {
             saveChatFriends(friends);
         }
 
-        sendToGoogleSheets({
-            action: 'friend_request_response',
+        const responseEntry = {
             sender: ecoUser.email,
             receiver: request.from,
             text: `${ecoUser.name} hat deine Freundschaftsanfrage angenommen.`,
-            type: 'friend_request',
+            type: 'friend_request_response',
             istFreund: true,
             timestamp: new Date().toISOString()
-        });
+        };
+        addChatLogEntry(responseEntry);
+        sendToGoogleSheets(responseEntry);
 
         updateActionInfo(`Du bist jetzt mit ${request.fromName} befreundet.`);
     } else {
-        sendToGoogleSheets({
-            action: 'friend_request_response',
+        const responseEntry = {
             sender: ecoUser.email,
             receiver: request.from,
             text: `${ecoUser.name} hat deine Freundschaftsanfrage abgelehnt.`,
-            type: 'friend_request',
+            type: 'friend_request_response',
             istFreund: false,
             timestamp: new Date().toISOString()
-        });
+        };
+        addChatLogEntry(responseEntry);
+        sendToGoogleSheets(responseEntry);
 
         updateActionInfo(`Freundschaftsanfrage von ${request.fromName} abgelehnt.`);
     }
@@ -666,15 +759,23 @@ function addUserBySearch(presetEmail) {
 
     const request = {
         id: makeRequestId(),
-        from: ecoUser.email,
+        from: normalizeEmail(ecoUser.email),
         fromName: ecoUser.name,
-        to: target.email,
+        to: normalizeEmail(target.email),
         toName: target.name,
         status: 'pending',
         timestamp: new Date().toISOString()
     };
 
     addFriendRequest(request);
+    addChatLogEntry({
+        sender: ecoUser.email,
+        receiver: target.email,
+        text: `${ecoUser.name} hat dir eine Freundschaftsanfrage geschickt.`,
+        type: 'friend_request',
+        istFreund: false,
+        timestamp: request.timestamp
+    });
     sendToGoogleSheets({
         action: 'friend_request',
         sender: ecoUser.email,
@@ -760,27 +861,6 @@ function closeChatModal() {
         clearInterval(chatRefreshInterval);
         chatRefreshInterval = null;
     }
-}
-
-function sendChatMessage() {
-    const input = document.getElementById('chat-message-input');
-    const message = input.value.trim();
-    const ecoUser = JSON.parse(localStorage.getItem('ecoUser'));
-
-    if (!message || !currentChatFriend || !ecoUser) return;
-
-    const msgObj = {
-        sender: ecoUser.email,
-        receiver: currentChatFriend,
-        text: message,
-        type: "text"
-    };
-
-    addMessageToChat(message, true);
-    sendToGoogleSheets(msgObj);
-
-    input.value = '';
-    input.focus();
 }
 
 function addMessageToChat(text, isOwn, username = '') {
@@ -2111,8 +2191,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const savedUser = localStorage.getItem('ecoUser')
     if (savedUser) {
         const user = JSON.parse(savedUser)
+        registerLocalUser(user);
         renderProfile(user)
         sendLoginToGoogleSheets(user)
+        loadFriends();
     }
     
     // Initialize points display
