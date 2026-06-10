@@ -1468,11 +1468,12 @@ async function loadTasks() {
     try {
         const response = await fetch('../../assets/tasks.json');
         allTasks = await response.json();
-        loadDailyTask(); // Tägliche Challenge laden
+        loadDailyTask();
     } catch (error) {
         console.error('Fehler beim Laden der Tasks:', error);
     } finally {
-        // Always sync tasks to UI, even if JSON load fails
+        // renderTasksSection wird von task-rotation.js aufgerufen
+        // sobald allTasks befüllt ist – syncAcceptedTasksToUI bleibt als Fallback
         syncAcceptedTasksToUI();
     }
 }
