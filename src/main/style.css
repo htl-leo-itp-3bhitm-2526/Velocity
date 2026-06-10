@@ -1607,6 +1607,48 @@ h1 { color: #4a7c44; font-size: 1.2rem; margin-bottom: 15px; }
     cursor: default;
 }
 
+.friend-request-row {
+    background: #f9fdf7;
+    border: 1px solid #d8e8d3;
+    border-radius: 16px;
+    padding: 14px 16px;
+    margin-bottom: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+}
+
+.friend-request-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.friend-request-action {
+    border: none;
+    border-radius: 999px;
+    padding: 0.55rem 0.85rem;
+    background: #7AB66E;
+    color: white;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.friend-request-action:hover {
+    background: #609a4d;
+}
+
+.friend-request-row strong {
+    display: block;
+    font-size: 0.95rem;
+    margin-bottom: 4px;
+}
+
+.friend-request-row .friend-request-meta {
+    font-size: 0.9rem;
+    color: #374537;
+}
+
 .dm-item {
     position: relative;
     width: 100%;

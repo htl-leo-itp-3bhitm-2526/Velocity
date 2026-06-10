@@ -168,7 +168,10 @@ const googleUsers = [
 ];
 
 const FRIENDS_STORAGE_KEY = 'googleFriends';
+const CHAT_FRIENDS_KEY = 'ecoChatFriends';
+const FRIEND_REQUESTS_KEY = 'ecoFriendRequests';
 const container = document.getElementById('friends-list-container');
+const friendRequestsContainer = document.getElementById('friend-requests-container');
 const actionInfo = document.getElementById('friends-action-info');
 const quickChatButton = document.getElementById('quick-chat-btn');
 const appUsers = [
@@ -183,6 +186,114 @@ const appUsers = [
 ];
 let lastQuickChatMatch = '';
 let displayedFriends = [];
+
+function getChatFriends() {
+    return JSON.parse(localStorage.getItem(CHAT_FRIENDS_KEY)) || [];
+}
+
+function saveChatFriends(friends) {
+    localStorage.setItem(CHAT_FRIENDS_KEY, JSON.stringify(friends));
+}
+
+function getFriendRequests() {
+    return JSON.parse(localStorage.getItem(FRIEND_REQUESTS_KEY)) || [];
+}
+
+function saveFriendRequests(requests) {
+    localStorage.setItem(FRIEND_REQUESTS_KEY, JSON.stringify(requests));
+}
+
+function getFriendRequestsForUser(email) {
+    return getFriendRequests().filter(request => request.to === email && request.status === 'pending');
+}
+
+function addFriendRequest(request) {
+    const requests = getFriendRequests();
+    requests.push(request);
+    saveFriendRequests(requests);
+}
+
+function updateFriendRequestStatus(requestId, status) {
+    const requests = getFriendRequests();
+    const index = requests.findIndex(request => request.id === requestId);
+    if (index === -1) return null;
+    requests[index].status = status;
+    saveFriendRequests(requests);
+    return requests[index];
+}
+
+function makeRequestId() {
+    return `req_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+}
+
+function isEmail(value) {
+    return /.+@.+\..+/.test(value);
+}
+
+function getDisplayNameFromEmail(email) {
+    return email.split('@')[0].replace(/[._\d]+/g, '').replace(/(^\w|\s\w)/g, m => m.toUpperCase()) || email;
+}
+
+function getConversationKey(userA, userB) {
+    return [userA, userB].sort().join('||');
+}
+
+function getSavedChatMessages() {
+    return JSON.parse(localStorage.getItem('chatMessages')) || {};
+}
+
+function saveChatMessages(messages) {
+    localStorage.setItem('chatMessages', JSON.stringify(messages));
+}
+
+function addLocalChatMessage(msgObj) {
+    const messages = getSavedChatMessages();
+    const key = getConversationKey(msgObj.sender, msgObj.receiver);
+    messages[key] = messages[key] || [];
+    messages[key].push(msgObj);
+    saveChatMessages(messages);
+}
+
+function getConversationMessages(friendEmail) {
+    const ecoUser = getLoggedInUser();
+    if (!ecoUser) return [];
+    const messages = getSavedChatMessages();
+    return messages[getConversationKey(ecoUser.email, friendEmail)] || [];
+}
+
+function getAllKnownUsers() {
+    const savedFriends = getSavedGoogleFriends();
+    const loggedInUser = getLoggedInUser();
+    const users = googleUsers.map(user => ({ ...user }));
+    if (loggedInUser && !users.some(user => user.email.toLowerCase() === loggedInUser.email.toLowerCase())) {
+        users.push({
+            name: loggedInUser.name,
+            email: loggedInUser.email,
+            online: true,
+            streak: 0,
+            vibe: 'Du',
+            points: 0
+        });
+    }
+    savedFriends.forEach(friend => {
+        if (!users.some(user => user.email.toLowerCase() === friend.email.toLowerCase())) {
+            users.push(friend);
+        }
+    });
+    return users;
+}
+
+function findRegisteredUser(identifier) {
+    if (!identifier) return null;
+    const normalized = identifier.trim().toLowerCase();
+    return getAllKnownUsers().find(user => {
+        return user.email?.toLowerCase() === normalized || user.name?.toLowerCase() === normalized;
+    });
+}
+
+function isFriendWith(email) {
+    return getChatFriends().some(friend => friend.email.toLowerCase() === email.toLowerCase());
+}
 
 function getSavedGoogleFriends() {
     return JSON.parse(localStorage.getItem(FRIENDS_STORAGE_KEY)) || [];
@@ -202,11 +313,14 @@ function isGoogleLoggedIn() {
 }
 
 function getAvailableGoogleUsers() {
-    const savedFriends = getSavedGoogleFriends();
-    return googleUsers.map(user => ({
-        ...user,
-        isFriend: savedFriends.some(friend => friend.email === user.email)
-    }));
+    const availableUsers = getAllKnownUsers();
+    const friendEmails = getChatFriends().map(friend => friend.email.toLowerCase());
+    return availableUsers
+        .filter(user => user.email && user.email.toLowerCase() !== getLoggedInUser()?.email?.toLowerCase())
+        .map(user => ({
+            ...user,
+            isFriend: friendEmails.includes(user.email.toLowerCase())
+        }));
 }
 
 function addGoogleFriend(email) {
@@ -216,13 +330,14 @@ function addGoogleFriend(email) {
     }
 
     const savedFriends = getSavedGoogleFriends();
-    const user = googleUsers.find(user => user.email === email);
-    if (!user) return;
-
-    if (savedFriends.some(friend => friend.email === email)) {
-        updateActionInfo(`${user.name} ist bereits Freund.`);
+    const existing = savedFriends.find(friend => friend.email.toLowerCase() === email.toLowerCase());
+    if (existing) {
+        updateActionInfo(`${existing.name} ist bereits in deiner Kontaktliste.`);
         return;
     }
+
+    const user = getAllKnownUsers().find(user => user.email?.toLowerCase() === email.toLowerCase());
+    if (!user) return;
 
     savedFriends.push(user);
     saveGoogleFriends(savedFriends);
@@ -233,10 +348,11 @@ function addGoogleFriend(email) {
 function loadFriends() {
     displayedFriends = getAvailableGoogleUsers();
     renderFriends(displayedFriends);
+    renderFriendRequests();
     if (!isGoogleLoggedIn()) {
-        updateActionInfo('Melde dich mit Google an, um anderen Google-Nutzern zu schreiben.');
+        updateActionInfo('Melde dich mit Google an, um anderen Nutzern Nachrichten und Anfragen zu senden.');
     } else {
-        updateActionInfo('Wähle einen Kontakt, um mit einem Google-Nutzer zu chatten.');
+        updateActionInfo('Wähle einen Kontakt oder eine Anfrage, um mit dem Chat zu starten.');
     }
 }
 
@@ -268,15 +384,15 @@ function renderFriends(list) {
             : `<button class="add-friend-btn" data-friend-email="${friend.email}" ${loggedIn ? '' : 'disabled'}>Freund hinzufügen</button>`;
 
         const html = `
-            <div class="friend-row ${friend.online ? 'is-online' : ''}" data-friend-name="${friend.name}">
+            <div class="friend-row ${friend.online ? 'is-online' : ''}" data-friend-email="${friend.email}">
                 <div class="friend-avatar">${initials}</div>
                 <div class="friend-meta">
                     <span class="friend-name">${friend.name}</span>
-                    <span class="friend-vibe">${friend.vibe}</span>
+                    <span class="friend-vibe">${friend.vibe || 'Verbinde dich'}</span>
                 </div>
                 <div class="friend-stats">
-                    <span class="friend-points">${friend.points} pts</span>
-                    <span class="friend-streak"><i class="fas fa-fire"></i> ${friend.streak}</span>
+                    <span class="friend-points">${friend.points || 0} pts</span>
+                    <span class="friend-streak"><i class="fas fa-fire"></i> ${friend.streak || 0}</span>
                 </div>
                 <div class="friend-actions">
                     ${actionButton}
@@ -286,6 +402,87 @@ function renderFriends(list) {
         `;
         container.innerHTML += html;
     });
+}
+
+function renderFriendRequests() {
+    if (!friendRequestsContainer) return;
+    const ecoUser = getLoggedInUser();
+    if (!ecoUser) {
+        friendRequestsContainer.innerHTML = '<p class="today-challenges-empty">Bitte melde dich an, um Freundschaftsanfragen zu sehen.</p>';
+        return;
+    }
+
+    const requests = getFriendRequestsForUser(ecoUser.email);
+    if (requests.length === 0) {
+        friendRequestsContainer.innerHTML = '<p class="today-challenges-empty">Keine Anfragen.</p>';
+        return;
+    }
+
+    friendRequestsContainer.innerHTML = requests.map(request => {
+        return `
+            <div class="friend-request-row" data-request-id="${request.id}">
+                <div class="friend-request-meta">
+                    <strong>${request.fromName}</strong> (${request.from}) möchte dein Freund sein.
+                </div>
+                <div class="friend-request-actions">
+                    <button class="friend-request-action" data-action="accept" data-request-id="${request.id}">Annehmen</button>
+                    <button class="friend-request-action" data-action="decline" data-request-id="${request.id}">Ablehnen</button>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function handleFriendRequestAction(requestId, action) {
+    const ecoUser = getLoggedInUser();
+    if (!ecoUser) return;
+
+    const request = updateFriendRequestStatus(requestId, action === 'accept' ? 'accepted' : 'declined');
+    if (!request) return;
+
+    if (action === 'accept') {
+        const friends = getChatFriends();
+        if (!friends.some(friend => friend.email.toLowerCase() === request.from.toLowerCase())) {
+            friends.push({
+                name: request.fromName,
+                email: request.from,
+                picture: '',
+                online: false,
+                streak: 0,
+                vibe: 'Freund',
+                points: 0,
+                isFriend: true
+            });
+            saveChatFriends(friends);
+        }
+
+        sendToGoogleSheets({
+            action: 'friend_request_response',
+            sender: ecoUser.email,
+            receiver: request.from,
+            text: `${ecoUser.name} hat deine Freundschaftsanfrage angenommen.`,
+            type: 'friend_request',
+            istFreund: true,
+            timestamp: new Date().toISOString()
+        });
+
+        updateActionInfo(`Du bist jetzt mit ${request.fromName} befreundet.`);
+    } else {
+        sendToGoogleSheets({
+            action: 'friend_request_response',
+            sender: ecoUser.email,
+            receiver: request.from,
+            text: `${ecoUser.name} hat deine Freundschaftsanfrage abgelehnt.`,
+            type: 'friend_request',
+            istFreund: false,
+            timestamp: new Date().toISOString()
+        });
+
+        updateActionInfo(`Freundschaftsanfrage von ${request.fromName} abgelehnt.`);
+    }
+
+    renderFriendRequests();
+    loadFriends();
 }
 
 function updateActionInfo(text) {
@@ -322,20 +519,31 @@ if (container) {
         const friendButton = event.target.closest('.add-friend-btn');
         if (friendButton) {
             const email = friendButton.dataset.friendEmail;
-            addGoogleFriend(email);
+            addUserBySearch(email);
             event.stopPropagation();
             return;
         }
 
         const row = event.target.closest('.friend-row');
         if (row) {
-            const friendName = row.dataset.friendName;
+            const friendEmail = row.dataset.friendEmail;
             if (!isGoogleLoggedIn()) {
                 updateActionInfo('Bitte melde dich mit Google an, um Nachrichten zu senden.');
                 return;
             }
-            openChat(friendName);
+            openChat(friendEmail);
         }
+    });
+}
+
+if (friendRequestsContainer) {
+    friendRequestsContainer.addEventListener('click', (event) => {
+        const requestButton = event.target.closest('.friend-request-action');
+        if (!requestButton) return;
+
+        const requestId = requestButton.dataset.requestId;
+        const action = requestButton.dataset.action;
+        handleFriendRequestAction(requestId, action);
     });
 }
 
@@ -350,20 +558,25 @@ async function loadMessagesFromGoogle() {
     const ecoUser = JSON.parse(localStorage.getItem('ecoUser'));
     if (!currentChatFriend || !ecoUser) return;
 
+    const messagesContainer = document.getElementById('chat-messages');
+    if (!messagesContainer) return;
+
+    messagesContainer.innerHTML = '';
+    renderConversationMessages();
+
     const url = `${WEB_APP_URL}?email=${encodeURIComponent(ecoUser.email)}&friend=${encodeURIComponent(currentChatFriend)}`;
-    
     try {
         const response = await fetch(url);
         const remoteMessages = await response.json();
-        const messagesContainer = document.getElementById('chat-messages');
-        
-        messagesContainer.innerHTML = ''; 
-        remoteMessages.forEach(msg => {
-            const isOwn = (msg.sender === ecoUser.email);
-            addMessageToChat(msg.text, isOwn);
-        });
+        if (Array.isArray(remoteMessages) && remoteMessages.length > 0) {
+            messagesContainer.innerHTML = '';
+            remoteMessages.forEach(msg => {
+                const isOwn = (msg.sender === ecoUser.email);
+                addMessageToChat(msg.text, isOwn);
+            });
+        }
     } catch (e) {
-        console.error(e);
+        console.error('Remote message polling failed:', e);
     }
 }
 
@@ -403,45 +616,141 @@ function handleCredentialResponse(response) {
     localStorage.setItem('ecoUser', JSON.stringify(userObj));
     sendLoginToGoogleSheets(userObj);
     renderProfile(userObj);
+    loadFriends();
 }
 
-function addUserBySearch() {
+function addUserBySearch(presetEmail) {
     const input = document.getElementById('friend-search-input');
-    const email = input.value.trim().toLowerCase();
-    if (!email) return;
+    const query = presetEmail || input.value.trim();
+    if (!query) return;
+    if (!isGoogleLoggedIn()) {
+        updateActionInfo('Bitte melde dich mit Google an, um Freundschaftsanfragen zu verschicken.');
+        return;
+    }
 
-    const savedFriends = getSavedGoogleFriends();
-    if (savedFriends.some(f => f.email === email)) return alert("Schon in der Liste!");
-
-    const newFriend = {
-        name: email.split('@')[0],
-        email: email,
+    const ecoUser = getLoggedInUser();
+    const normalizedQuery = query.trim();
+    const target = findRegisteredUser(normalizedQuery) || (isEmail(normalizedQuery) ? {
+        name: getDisplayNameFromEmail(normalizedQuery),
+        email: normalizedQuery,
         online: false,
         streak: 0,
-        vibe: "Neu hinzugefügt",
-        points: 0,
-        isFriend: true
+        vibe: 'Neu hinzugefügt',
+        points: 0
+    } : null);
+
+    if (!target || !target.email) {
+        updateActionInfo('Kein Nutzer gefunden. Bitte verwende eine gültige E-Mail oder einen bekannten Namen.');
+        if (input) input.value = '';
+        return;
+    }
+
+    if (target.email.toLowerCase() === ecoUser.email.toLowerCase()) {
+        updateActionInfo('Du kannst dich nicht selbst hinzufügen.');
+        if (input) input.value = '';
+        return;
+    }
+
+    if (isFriendWith(target.email)) {
+        updateActionInfo(`${target.name} ist bereits als Freund gespeichert.`);
+        if (input) input.value = '';
+        return;
+    }
+
+    const existingRequest = getFriendRequests().find(request => request.from.toLowerCase() === ecoUser.email.toLowerCase() && request.to.toLowerCase() === target.email.toLowerCase() && request.status === 'pending');
+    if (existingRequest) {
+        updateActionInfo('Eine Anfrage wurde bereits gesendet.');
+        if (input) input.value = '';
+        return;
+    }
+
+    const request = {
+        id: makeRequestId(),
+        from: ecoUser.email,
+        fromName: ecoUser.name,
+        to: target.email,
+        toName: target.name,
+        status: 'pending',
+        timestamp: new Date().toISOString()
     };
 
-    savedFriends.push(newFriend);
-    saveGoogleFriends(savedFriends);
-    loadFriends();
-    input.value = '';
+    addFriendRequest(request);
+    sendToGoogleSheets({
+        action: 'friend_request',
+        sender: ecoUser.email,
+        receiver: target.email,
+        text: `${ecoUser.name} hat dir eine Freundschaftsanfrage geschickt.`,
+        type: 'friend_request',
+        istFreund: false,
+        timestamp: request.timestamp
+    });
+
+    updateActionInfo(`Freundschaftsanfrage an ${target.name} gesendet.`);
+    if (input) input.value = '';
+    renderFriendRequests();
 }
 
 
 function openChat(friendEmail) {
     if (!isGoogleLoggedIn()) return;
 
-    currentChatFriend = friendEmail; // Nutze die Email für die Datenbank-Abfrage
+    const isEmailContact = friendEmail.includes('@');
+    if (isEmailContact && !isFriendWith(friendEmail)) {
+        updateActionInfo('Nur akzeptierte Freunde können chatten. Bitte sende zuerst eine Anfrage.');
+        return;
+    }
+
+    currentChatFriend = friendEmail;
     document.getElementById('chat-friend-name').textContent = friendEmail;
     document.getElementById('chat-modal').style.display = 'flex';
-    document.getElementById('chat-messages').innerHTML = 'Lade...';
+    const chatMessagesEl = document.getElementById('chat-messages');
+    if (chatMessagesEl) chatMessagesEl.innerHTML = 'Lade...';
 
+    renderConversationMessages();
     loadMessagesFromGoogle();
     if (chatRefreshInterval) clearInterval(chatRefreshInterval);
     chatRefreshInterval = setInterval(loadMessagesFromGoogle, 3000);
 }
+
+function renderConversationMessages() {
+    const messagesContainer = document.getElementById('chat-messages');
+    if (!messagesContainer || !currentChatFriend) return;
+
+    const messages = getConversationMessages(currentChatFriend);
+    messagesContainer.innerHTML = messages.length === 0 ? '<p class="today-challenges-empty">Noch keine Nachrichten.</p>' : '';
+    messages.forEach(entry => {
+        addMessageToChat(entry.text, entry.sender === getLoggedInUser()?.email);
+    });
+}
+
+function sendChatMessage() {
+    const input = document.getElementById('chat-message-input');
+    const message = input.value.trim();
+    const ecoUser = JSON.parse(localStorage.getItem('ecoUser'));
+
+    if (!message || !currentChatFriend || !ecoUser) return;
+    if (currentChatFriend.includes('@') && !isFriendWith(currentChatFriend)) {
+        updateActionInfo('Du kannst nur mit bestätigten Freunden schreiben.');
+        return;
+    }
+
+    const msgObj = {
+        sender: ecoUser.email,
+        receiver: currentChatFriend,
+        text: message,
+        type: 'text',
+        istFreund: isFriendWith(currentChatFriend),
+        timestamp: new Date().toISOString()
+    };
+
+    addLocalChatMessage(msgObj);
+    addMessageToChat(message, true);
+    sendToGoogleSheets(msgObj);
+
+    input.value = '';
+    input.focus();
+}
+
     
 
 function closeChatModal() {
@@ -1551,11 +1860,16 @@ function simulateLiveUpdates() {
 
 // Google send -- WEBHOOK
 async function sendToGoogleSheets(msgObj) {
+    const payload = {
+        action: msgObj.action || 'message',
+        ...msgObj
+    };
+
     try {
         await fetch(WEB_APP_URL, {
-            method: "POST",
-            mode: "no-cors",
-            body: JSON.stringify(msgObj)
+            method: 'POST',
+            mode: 'no-cors',
+            body: JSON.stringify(payload)
         });
     } catch (error) {
         console.error(error);
@@ -1776,6 +2090,8 @@ function logout() {
     if (nameEl) nameEl.textContent = 'LÄDT...'
     if (avatarEl) avatarEl.src = 'avatar.png'
     if (locationEl) locationEl.textContent = 'ORGANISATION'
+
+    loadFriends();
 }
 
 document.addEventListener('DOMContentLoaded', () => {
