@@ -1399,6 +1399,7 @@ h1 { color: #4a7c44; font-size: 1.2rem; margin-bottom: 15px; }
     background-color: #f4f7f4;
     overflow-y: auto;
     overflow-x: hidden;
+    padding-top: calc(1.75rem + var(--safe-area-inset-top));
     padding-bottom: calc(6.25rem + var(--safe-area-inset-bottom));
 }
 .profile-header-bg {
@@ -1422,7 +1423,7 @@ h1 { color: #4a7c44; font-size: 1.2rem; margin-bottom: 15px; }
     width: 90%;
     border-radius: 35px;
     padding: 30px;
-    margin: -70px auto 25px auto;
+    margin: -48px auto 25px auto;
     box-shadow: 0 15px 35px rgba(0,0,0,0.05);
 }
 .avatar-container {
@@ -3802,7 +3803,7 @@ h1 { color: #4a7c44; font-size: 1.2rem; margin-bottom: 15px; }
     }
 
     .profile-card {
-        margin: -40px auto 14px auto;
+        margin: -26px auto 14px auto;
     }
 
     .stats-section,
