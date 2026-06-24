@@ -45,7 +45,17 @@ $conn->query("CREATE TABLE IF NOT EXISTS users (
     last_streak_date DATE NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
-// Tasks table
+// Task definitions table (predefined tasks from DB)
+$conn->query("CREATE TABLE IF NOT EXISTS task_definitions (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    task_type ENUM('weekly', 'daily') NOT NULL,
+    task_name VARCHAR(255) NOT NULL,
+    task_icon VARCHAR(100) DEFAULT 'fas fa-check',
+    proof_url VARCHAR(500) DEFAULT '',
+    points INT DEFAULT 10
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+// User tasks table
 $conn->query("CREATE TABLE IF NOT EXISTS user_tasks (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
@@ -96,40 +106,184 @@ $conn->query("CREATE TABLE IF NOT EXISTS user_badges (
     UNIQUE KEY unique_badge (user_id, badge_key)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
-// Available Tasks table
-$conn->query("CREATE TABLE IF NOT EXISTS available_tasks (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    task_name VARCHAR(255) NOT NULL UNIQUE,
-    task_icon VARCHAR(100) DEFAULT 'fas fa-check',
-    task_description TEXT DEFAULT NULL,
-    category VARCHAR(100) DEFAULT 'weekly',
-    url VARCHAR(500) DEFAULT '',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+// Drop old available_tasks table if it exists (replaced by task_definitions)
+$conn->query("DROP TABLE IF EXISTS available_tasks");
 
-// Insert available tasks if they don't exist
-$tasks = [
-    ["Müll im Wald sammeln", "fas fa-recycle", "weekly"],
-    ["Mit dem Fahrrad zur Arbeit", "fas fa-bicycle", "weekly"],
-    ["Plastikfrei einkaufen", "fas fa-shopping-bag", "weekly"],
-    ["Energiesparen zu Hause", "fas fa-lightbulb", "weekly"],
-    ["Wasser sparen", "fas fa-droplet", "weekly"],
-    ["Pflanze einen Baum", "fas fa-tree", "weekly"],
-    ["Vegetarischer Tag", "fas fa-leaf", "weekly"],
-    ["Öffentliche Verkehrsmittel nutzen", "fas fa-bus", "weekly"],
-    ["Kompost machen", "fas fa-leaf", "weekly"],
-    ["Secondhand-Einkauf", "fas fa-shirt", "weekly"],
+// ===== SEED DATA: Clear existing and re-insert =====
+$conn->query("DELETE FROM task_definitions");
+
+// Weekly Tasks (50)
+$weeklyTasks = [
+    ['Müll im Wald sammeln', 'fas fa-recycle', 50],
+    ['Mit dem Fahrrad zur Arbeit', 'fas fa-bicycle', 30],
+    ['Plastikfrei einkaufen', 'fas fa-shopping-bag', 40],
+    ['Energiesparen zu Hause', 'fas fa-lightbulb', 25],
+    ['Wasser sparen', 'fas fa-droplet', 25],
+    ['Pflanze einen Baum', 'fas fa-tree', 60],
+    ['Vegetarischer Tag', 'fas fa-leaf', 20],
+    ['Öffentliche Verkehrsmittel nutzen', 'fas fa-bus', 30],
+    ['Kompost machen', 'fas fa-leaf', 35],
+    ['Secondhand-Einkauf', 'fas fa-shirt', 30],
+    ['Nachbarn zum Umweltschutz motivieren', 'fas fa-handshake', 40],
+    ['Naturschutzgebiet besuchen', 'fas fa-mountain', 25],
+    ['Stromsparende Geräte anschaffen', 'fas fa-plug', 45],
+    ['Regentonnen aufstellen', 'fas fa-droplet', 35],
+    ['Bienenfreundliche Pflanzen säen', 'fas fa-flower', 35],
+    ['Plastikfreie Verpackung verwenden', 'fas fa-box-open', 30],
+    ['Carpool-Fahrt organisieren', 'fas fa-car', 30],
+    ['Lokale Produkte kaufen', 'fas fa-apple', 20],
+    ['Müll sortieren und recyceln', 'fas fa-trash', 20],
+    ['DIY-Reparaturkurs besuchen', 'fas fa-hammer', 40],
+    ['Umweltfilm schauen und lernen', 'fas fa-film', 20],
+    ['Wildblumenwiese anlegen', 'fas fa-clover', 45],
+    ['Nachhaltige Kosmetik testen', 'fas fa-spray-can', 20],
+    ['Grüne Wanderung unternehmen', 'fas fa-person-hiking', 25],
+    ['Stromliste optimieren', 'fas fa-chart-line', 30],
+    ['Plastiktüten durch Beutel ersetzen', 'fas fa-bag-shopping', 20],
+    ['Umwelt-Webinar besuchen', 'fas fa-globe', 30],
+    ['Nachhaltige Mode kaufen', 'fas fa-shirt', 30],
+    ['Garten ohne Chemikalien pflegen', 'fas fa-flower', 25],
+    ['Flussufer reinigen', 'fas fa-water', 50],
+    ['Bio-Produkte kaufen', 'fas fa-carrot', 20],
+    ['Duschzeit verkürzen', 'fas fa-shower', 15],
+    ['Freunde zum Umweltschutz einladen', 'fas fa-users', 30],
+    ['Solaranlage prüfen', 'fas fa-sun', 35],
+    ['Abfallarme Einkaufsrouten planen', 'fas fa-map', 20],
+    ['Nachhaltige Technologie kaufen', 'fas fa-laptop', 40],
+    ['Tierfreundlichen Garten gestalten', 'fas fa-paw', 35],
+    ['Regenwasser sammeln', 'fas fa-cloud-rain', 25],
+    ['Bedrohte Tierarten unterstützen', 'fas fa-dove', 45],
+    ['Nachhaltige Finanzprodukte wählen', 'fas fa-money-bill', 30],
+    ['Klimaziele planen', 'fas fa-bullseye', 20],
+    ['Umweltzertifikate überprüfen', 'fas fa-certificate', 20],
+    ['Waldspaziergang machen', 'fas fa-tree', 15],
+    ['Nachbarschaftsgarten nutzen', 'fas fa-leaf', 25],
+    ['Klimafreundlich kochen', 'fas fa-utensils', 20],
+    ['Naturschutzorganisation unterstützen', 'fas fa-heart', 35],
+    ['Nachhaltigkeit reflektieren', 'fas fa-person-praying', 15],
+    ['Grüne Apps nutzen', 'fas fa-mobile', 15],
+    ['Umweltfreundliche Versicherung wählen', 'fas fa-shield', 30],
+    ['Nachhaltigkeitsziele überprüfen', 'fas fa-check', 15]
 ];
 
-foreach ($tasks as $task) {
-    $taskName = $task[0];
-    $taskIcon = $task[1];
-    $category = $task[2];
-    
-    $stmt = $conn->prepare("INSERT IGNORE INTO available_tasks (task_name, task_icon, category) VALUES (?, ?, ?)");
-    $stmt->bind_param("sss", $taskName, $taskIcon, $category);
-    $stmt->execute();
-    $stmt->close();
-}
+// Daily Tasks (100)
+$dailyTasks = [
+    ['Wasser beim Zähneputzen sparen', 'fas fa-water', 5],
+    ['Licht ausschalten', 'fas fa-lightbulb', 5],
+    ['Zu Fuß gehen statt Auto fahren', 'fas fa-person-walking', 10],
+    ['Müll korrekt trennen', 'fas fa-trash', 5],
+    ['Energiesparende Geräte nutzen', 'fas fa-plug', 5],
+    ['Fleischfrei essen', 'fas fa-salad', 10],
+    ['Dusche statt Bad nehmen', 'fas fa-shower', 5],
+    ['Plastikverpackungen vermeiden', 'fas fa-ban', 10],
+    ['Wiederverwendbare Behälter nutzen', 'fas fa-box', 5],
+    ['Heizung regulieren', 'fas fa-temperature-low', 5],
+    ['Fahrrad statt Auto', 'fas fa-bicycle', 10],
+    ['Öffis statt Auto', 'fas fa-bus', 10],
+    ['Kaffee in eigener Tasse', 'fas fa-mug-hot', 5],
+    ['Lebensmittel nicht verschwenden', 'fas fa-apple', 10],
+    ['Gebrauchte Kleidung tragen', 'fas fa-shirt', 5],
+    ['Digitale statt Papier-Rechnung', 'fas fa-envelope', 5],
+    ['Pflanzen gießen', 'fas fa-leaf', 5],
+    ['Batterien richtig entsorgen', 'fas fa-battery-full', 5],
+    ['Nachhaltiges Shopping planen', 'fas fa-list', 5],
+    ['Umweltfreundliches Putzmittel verwenden', 'fas fa-spray-can', 5],
+    ['Insekten-freundliche Umgebung schaffen', 'fas fa-bug', 10],
+    ['Grüne Webseiten nutzen', 'fas fa-globe', 5],
+    ['Luftqualität überprüfen', 'fas fa-wind', 5],
+    ['Naturfreunde treffen', 'fas fa-people-group', 10],
+    ['Biologische Lebensmittel essen', 'fas fa-carrot', 10],
+    ['Fußabdruck berechnen', 'fas fa-chart-line', 5],
+    ['Werbebriefe abmelden', 'fas fa-envelopes-bulk', 5],
+    ['Klimakompensation überprüfen', 'fas fa-leaf', 5],
+    ['Nachhaltige Marken recherchieren', 'fas fa-search', 5],
+    ['Kostenlos tauschen statt kaufen', 'fas fa-exchange', 10],
+    ['Umwelttipps teilen', 'fas fa-share-nodes', 5],
+    ['Naturschutzgebiet respektieren', 'fas fa-hand', 5],
+    ['Grüne Alternativen finden', 'fas fa-leaf', 5],
+    ['Nachbarn über Umwelt sprechen', 'fas fa-comments', 5],
+    ['Wasserhahn nicht laufen lassen', 'fas fa-water', 5],
+    ['Nachhaltige Finanzen planen', 'fas fa-money-bill', 10],
+    ['Öko-Produkte nutzen', 'fas fa-leaf', 5],
+    ['Energie-Rechnung prüfen', 'fas fa-chart-pie', 5],
+    ['Pflanze des Tages retten', 'fas fa-flower', 5],
+    ['Müll vermeiden', 'fas fa-ban', 10],
+    ['Nachhaltig verpackt einkaufen', 'fas fa-package', 5],
+    ['Umweltfreundlich waschen', 'fas fa-droplet', 5],
+    ['Grüne Inspirationen sammeln', 'fas fa-bookmark', 5],
+    ['Tiere beobachten', 'fas fa-binoculars', 5],
+    ['Nachhaltig kochen', 'fas fa-pot-food', 10],
+    ['Obst und Gemüse lokal kaufen', 'fas fa-apple', 10],
+    ['Wasser-Fußabdruck reduzieren', 'fas fa-droplet', 5],
+    ['Naturschutz unterstützen', 'fas fa-hands-praying', 10],
+    ['Grüne Mobilität checken', 'fas fa-car', 5],
+    ['Nachhaltiges Frühstück', 'fas fa-bread-slice', 5],
+    ['Alte Kleidung weitergeben', 'fas fa-person-dots', 5],
+    ['Umweltnachrichten lesen', 'fas fa-newspaper', 5],
+    ['Wäsche bei niedriger Temperatur waschen', 'fas fa-washing-machine', 5],
+    ['Klimafreundlich pendeln', 'fas fa-person-walking', 10],
+    ['Naturbeobachtung', 'fas fa-leaf', 5],
+    ['Grüne Gedanken notieren', 'fas fa-pen', 5],
+    ['Umweltziele reflektieren', 'fas fa-person-praying', 5],
+    ['Nachhaltige Mode überprüfen', 'fas fa-shirt', 5],
+    ['Elektronik-Müll vermeiden', 'fas fa-ban', 10],
+    ['Bio-Lebensmittel genießen', 'fas fa-leaf', 5],
+    ['Grüne Routine etablieren', 'fas fa-repeat', 5],
+    ['Wasser sparen beim Duschen', 'fas fa-shower', 5],
+    ['Umweltfreundlich reisen', 'fas fa-map', 10],
+    ['Nachhaltige Geschenke kaufen', 'fas fa-gift', 10],
+    ['Natur fotografieren', 'fas fa-camera', 5],
+    ['Grüne Gemeinschaft pflegen', 'fas fa-handshake', 10],
+    ['Lebensmittel-Reste verwerten', 'fas fa-utensils', 5],
+    ['Nachhaltige Hautpflege nutzen', 'fas fa-droplet', 5],
+    ['Umweltschutz-App nutzen', 'fas fa-mobile', 5],
+    ['Natur-Yoga machen', 'fas fa-person', 10],
+    ['Grüne Cafés besuchen', 'fas fa-leaf', 5],
+    ['Nachhaltig waschen', 'fas fa-droplet', 5],
+    ['Umweltzertifikate prüfen', 'fas fa-certificate', 5],
+    ['Grüne Dekorationen nutzen', 'fas fa-flower', 5],
+    ['Nachhaltige Hobbys', 'fas fa-heart', 5],
+    ['Natur-Workout', 'fas fa-person-hiking', 10],
+    ['Grüne Gebäude erkunden', 'fas fa-building', 5],
+    ['Nachhaltige Meetings', 'fas fa-comments', 5],
+    ['Umweltstress reduzieren', 'fas fa-spa', 5],
+    ['Grüne Oasen schaffen', 'fas fa-leaf', 10],
+    ['Nachhaltig einkaufen', 'fas fa-bag-shopping', 10],
+    ['Wasser-Qualität prüfen', 'fas fa-droplet', 5],
+    ['Grüne Energien nutzen', 'fas fa-sun', 10],
+    ['Nachhaltige Nachbarn unterstützen', 'fas fa-hand', 5],
+    ['Umwelt-Journal schreiben', 'fas fa-book', 5],
+    ['Grüne Inspiration teilen', 'fas fa-share', 5],
+    ['Nachhaltige Kreativität', 'fas fa-palette', 5],
+    ['Natur-Spaziergang', 'fas fa-person-walking', 5],
+    ['Grüne Routinen ausbauen', 'fas fa-repeat', 5],
+    ['Nachhaltige Freundschaften pflegen', 'fas fa-handshake', 5],
+    ['Umweltliche Gesten', 'fas fa-hands-praying', 5],
+    ['Grüne Gedanken sammeln', 'fas fa-lightbulb', 5],
+    ['Nachhaltige Pausen einbauen', 'fas fa-leaf', 5],
+    ['Umwelt-Podcast hören', 'fas fa-headphones', 5],
+    ['Grüne Tradition starten', 'fas fa-star', 5],
+    ['Nachhaltige Ziele visualisieren', 'fas fa-eye', 5],
+    ['Umwelt-Erkenntnisse teilen', 'fas fa-share-nodes', 5],
+    ['Grüner Alltag feststellen', 'fas fa-check', 5],
+    ['Nachhaltige Reflexion', 'fas fa-person-praying', 5],
+    ['Nächste grüne Aktion planen', 'fas fa-calendar', 5]
+];
 
-echo json_encode(["success" => true, "message" => "Datenbank erfolgreich eingerichtet!"]);
+// Insert weekly tasks
+$stmt = $conn->prepare("INSERT INTO task_definitions (task_type, task_name, task_icon, points) VALUES ('weekly', ?, ?, ?)");
+foreach ($weeklyTasks as $task) {
+    $stmt->bind_param("ssi", $task[0], $task[1], $task[2]);
+    $stmt->execute();
+}
+$stmt->close();
+
+// Insert daily tasks
+$stmt = $conn->prepare("INSERT INTO task_definitions (task_type, task_name, task_icon, points) VALUES ('daily', ?, ?, ?)");
+foreach ($dailyTasks as $task) {
+    $stmt->bind_param("ssi", $task[0], $task[1], $task[2]);
+    $stmt->execute();
+}
+$stmt->close();
+
+echo json_encode(["success" => true, "message" => "Datenbank erfolgreich eingerichtet mit allen 150 Aufgaben!"]);
