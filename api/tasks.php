@@ -19,6 +19,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 $action = $_GET['action'] ?? '';
+
+// Available tasks can be fetched without login
+if ($action === 'available') {
+    handleGetAvailableTasks();
+    exit;
+}
+
 $user = requireLogin();
 
 switch ($action) {
@@ -243,4 +250,36 @@ function handleRecentUploads($user) {
     }
 
     sendJson(["uploads" => $uploads]);
+}
+
+function handleGetAvailableTasks() {
+    try {
+        $conn = getConnection();
+
+        // Get all available tasks grouped by category
+        $stmt = $conn->prepare("SELECT id, task_name, task_icon, category FROM available_tasks ORDER BY category, task_name");
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        $tasks = [
+            'weekly' => [],
+            'daily' => []
+        ];
+
+        while ($row = $result->fetch_assoc()) {
+            $task = [
+                "id" => (int)$row['id'],
+                "task" => $row['task_name'],
+                "icon" => $row['task_icon'],
+                "category" => $row['category']
+            ];
+
+            $category = $row['category'] === 'daily' ? 'daily' : 'weekly';
+            $tasks[$category][] = $task;
+        }
+
+        sendJson($tasks);
+    } catch (Exception $e) {
+        sendError("Failed to load tasks: " . $e->getMessage(), 500);
+    }
 }

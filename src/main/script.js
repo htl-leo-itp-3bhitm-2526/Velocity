@@ -864,10 +864,20 @@ function syncAcceptedTasksToUI() {
 
 async function loadTasks() {
   try {
-    const response = await fetch('../../assets/tasks.json');
+    const response = await fetch(`${API_BASE}/tasks.php?action=available`);
     allTasks = await response.json();
     loadDailyTask();
-  } catch (error) { console.error('Fehler beim Laden der Tasks:', error); }
+  } catch (error) { 
+    console.error('Fehler beim Laden der Tasks:', error);
+    // Fallback to JSON file if API fails
+    try {
+      const response = await fetch('../../assets/tasks.json');
+      allTasks = await response.json();
+      loadDailyTask();
+    } catch (error2) {
+      console.error('Fallback zu JSON auch fehlgeschlagen:', error2);
+    }
+  }
   syncAcceptedTasksToUI();
 }
 

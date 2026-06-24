@@ -96,4 +96,40 @@ $conn->query("CREATE TABLE IF NOT EXISTS user_badges (
     UNIQUE KEY unique_badge (user_id, badge_key)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
+// Available Tasks table
+$conn->query("CREATE TABLE IF NOT EXISTS available_tasks (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    task_name VARCHAR(255) NOT NULL UNIQUE,
+    task_icon VARCHAR(100) DEFAULT 'fas fa-check',
+    task_description TEXT DEFAULT NULL,
+    category VARCHAR(100) DEFAULT 'weekly',
+    url VARCHAR(500) DEFAULT '',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+// Insert available tasks if they don't exist
+$tasks = [
+    ["Müll im Wald sammeln", "fas fa-recycle", "weekly"],
+    ["Mit dem Fahrrad zur Arbeit", "fas fa-bicycle", "weekly"],
+    ["Plastikfrei einkaufen", "fas fa-shopping-bag", "weekly"],
+    ["Energiesparen zu Hause", "fas fa-lightbulb", "weekly"],
+    ["Wasser sparen", "fas fa-droplet", "weekly"],
+    ["Pflanze einen Baum", "fas fa-tree", "weekly"],
+    ["Vegetarischer Tag", "fas fa-leaf", "weekly"],
+    ["Öffentliche Verkehrsmittel nutzen", "fas fa-bus", "weekly"],
+    ["Kompost machen", "fas fa-leaf", "weekly"],
+    ["Secondhand-Einkauf", "fas fa-shirt", "weekly"],
+];
+
+foreach ($tasks as $task) {
+    $taskName = $task[0];
+    $taskIcon = $task[1];
+    $category = $task[2];
+    
+    $stmt = $conn->prepare("INSERT IGNORE INTO available_tasks (task_name, task_icon, category) VALUES (?, ?, ?)");
+    $stmt->bind_param("sss", $taskName, $taskIcon, $category);
+    $stmt->execute();
+    $stmt->close();
+}
+
 echo json_encode(["success" => true, "message" => "Datenbank erfolgreich eingerichtet!"]);
