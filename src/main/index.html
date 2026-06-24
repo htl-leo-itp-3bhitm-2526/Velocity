@@ -14,8 +14,80 @@
     <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
-    <header class="app-header" id="appHeader">
 
+    <!-- ===== LOGIN / REGISTER MODAL ===== -->
+    <div id="authModal" class="auth-modal-overlay">
+        <div class="auth-modal">
+            <div class="auth-tabs">
+                <button class="auth-tab active" data-tab="login">Anmelden</button>
+                <button class="auth-tab" data-tab="register">Registrieren</button>
+            </div>
+
+            <!-- Login Form -->
+            <form id="loginForm" class="auth-form active">
+                <h2>Willkommen zurück!</h2>
+                <p class="auth-subtitle">Melde dich an, um fortzufahren</p>
+                
+                <div class="auth-field">
+                    <label for="loginEmail">E-Mail</label>
+                    <input type="email" id="loginEmail" placeholder="deine@email.com" required>
+                </div>
+                <div class="auth-field">
+                    <label for="loginPassword">Passwort</label>
+                    <input type="password" id="loginPassword" placeholder="Passwort" required>
+                </div>
+
+                <div class="auth-divider">
+                    <span>ODER</span>
+                </div>
+
+                <div id="g_id_onload"
+                     data-client_id="173186286679-g5kc3btvd567cfivlcbthskcp5486l8u.apps.googleusercontent.com"
+                     data-callback="handleCredentialResponse">
+                </div>
+                <div class="g_id_signin"
+                     data-type="standard"
+                     data-shape="pill" 
+                     data-theme="outline"
+                     data-text="signin_with"
+                     data-size="large"
+                     data-logo_alignment="left"
+                     data-width="280">
+                </div>
+
+                <button type="submit" class="btn-primary auth-submit-btn">
+                    <i class="fas fa-sign-in-alt"></i> Anmelden
+                </button>
+            </form>
+
+            <!-- Register Form -->
+            <form id="registerForm" class="auth-form">
+                <h2>Neues Konto erstellen</h2>
+                <p class="auth-subtitle">Werde Teil der EcoStreak-Community</p>
+                
+                <div class="auth-field">
+                    <label for="registerName">Name</label>
+                    <input type="text" id="registerName" placeholder="Dein Name" required>
+                </div>
+                <div class="auth-field">
+                    <label for="registerEmail">E-Mail</label>
+                    <input type="email" id="registerEmail" placeholder="deine@email.com" required>
+                </div>
+                <div class="auth-field">
+                    <label for="registerPassword">Passwort</label>
+                    <input type="password" id="registerPassword" placeholder="Mindestens 6 Zeichen" required>
+                </div>
+
+                <button type="submit" class="btn-primary auth-submit-btn">
+                    <i class="fas fa-user-plus"></i> Registrieren
+                </button>
+            </form>
+
+            <div id="authErrorMessage" class="auth-error-message" style="display:none;"></div>
+        </div>
+    </div>
+
+    <header class="app-header" id="appHeader">
         
     </header>
 
@@ -61,7 +133,7 @@
             </div>
           </div>
           <div class="streak-counter">
-            <span class="streak-number" id="streakCount">12</span>
+            <span class="streak-number" id="streakCount">0</span>
             <span class="streak-label">Tage</span>
           </div>
         </div>
@@ -228,7 +300,7 @@
             </div>
         </div>
         <div class="user-info">
-            <h2 id="user-name">LÄDT...</h2>
+            <h2 id="user-name">Nicht angemeldet</h2>
             <p id="user-location">ORGANISATION</p>
         </div>
         <div class="level-panel">
@@ -239,28 +311,22 @@
                     <span id="profile-level-title">Green Seed</span>
                 </div>
             </div>
-            <p class="level-progress-text" id="level-progress-text">20 / 100 XP bis Leaf Starter</p>
+            <p class="level-progress-text" id="level-progress-text">0 / 100 XP bis Leaf Starter</p>
             <div class="level-progress-track" aria-hidden="true">
                 <div class="level-progress-fill" id="level-progress-fill"></div>
             </div>
             <div class="level-icon-track" id="level-icon-track" aria-label="Level Icons"></div>
         </div>
-        <div id="g_id_onload"
-         data-client_id="173186286679-g5kc3btvd567cfivlcbthskcp5486l8u.apps.googleusercontent.com"
-         data-callback="handleCredentialResponse">
-    </div>
-    <div class="g_id_signin"
-     data-type="standard"
-     data-shape="pill" 
-     data-theme="outline"
-     data-text="signin_with"
-     data-size="large"
-     data-logo_alignment="left"
-     data-width="280">
-</div>
-    <button id="logoutBtn" class="btn-logout" disabled>
-        <i class="fas fa-sign-out-alt"></i> Abmelden
-    </button>
+
+        <div class="profile-login-area">
+            <button id="showLoginBtn" class="btn-primary">
+                <i class="fas fa-sign-in-alt"></i> Anmelden / Registrieren
+            </button>
+        </div>
+
+        <button id="logoutBtn" class="btn-logout" disabled>
+            <i class="fas fa-sign-out-alt"></i> Abmelden
+        </button>
     </div>
 
     <div class="stats-section">
