@@ -1,6 +1,6 @@
 <?php
 // Database configuration
-define('DB_HOST', 'db_server');
+define('DB_HOST', 'mysql-db');
 define('DB_USER', 'root');
 define('DB_PASS', 'rootpassword');
 define('DB_NAME', 'velocity_db');
