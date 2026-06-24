@@ -165,6 +165,37 @@ async function refreshProfile() {
   } catch (e) { console.error('refreshProfile failed', e); }
 }
 
+// Fetch user's accepted tasks from API (server-backed)
+async function fetchMyTasks() {
+  acceptedTasks = [];
+  if (!isLoggedIn()) {
+    renderAcceptedTaskSection();
+    renderTodayChallenges();
+    return;
+  }
+  try {
+    const res = await fetch(`${API_BASE}/tasks.php?action=my_tasks`, { credentials: 'same-origin' });
+    const data = await res.json();
+    if (data && Array.isArray(data.tasks)) {
+      acceptedTasks = data.tasks.map(t => ({
+        id: Date.now() + Math.floor(Math.random()*1000),
+        serverId: t.id,
+        task: t.task_name,
+        icon: t.task_icon,
+        points: t.points,
+        isDaily: t.is_daily,
+        status: t.status,
+        acceptedDate: t.accepted_date,
+        completedAt: t.completed_date,
+        proofUploadedAt: t.proof_uploaded_at
+      }));
+    }
+  } catch (e) { console.error('fetchMyTasks failed', e); }
+  renderAcceptedTaskSection();
+  renderTodayChallenges();
+  loadRecentUploads();
+}
+
 function requireAuth(action) {
   if (!isLoggedIn()) {
     showAuthModal();
@@ -207,10 +238,10 @@ async function handleLogin(e) {
     if (data.success) {
       currentUser = data.user;
       hideAuthModal();
-      renderProfile();
+      await refreshProfile();
+      await fetchMyTasks();
+      await loadTasks();
       loadFriends();
-      updatePointsDisplay();
-      updateStreakDisplay();
       showToast('Erfolgreich angemeldet!', 'success');
     }
   } catch (e) { showAuthError('Verbindungsfehler zum Server.'); }
@@ -233,10 +264,10 @@ async function handleRegister(e) {
     if (data.success) {
       currentUser = data.user;
       hideAuthModal();
-      renderProfile();
+      await refreshProfile();
+      await fetchMyTasks();
+      await loadTasks();
       loadFriends();
-      updatePointsDisplay();
-      updateStreakDisplay();
       showToast('Registrierung erfolgreich!', 'success');
     }
   } catch (e) { showAuthError('Verbindungsfehler zum Server.'); }
@@ -246,8 +277,13 @@ async function handleLogout() {
   try {
     await fetch(`${API_BASE}/auth.php?action=logout`, { credentials: 'same-origin' });
     currentUser = null;
+    // Clear server-backed state and refresh UI
+    acceptedTasks = [];
+    renderAcceptedTaskSection();
+    renderTodayChallenges();
     renderProfile();
     loadFriends();
+    await loadTasks();
     showToast('Abgemeldet.', 'info');
   } catch (e) { console.error('Logout failed:', e); }
 }
@@ -269,10 +305,10 @@ async function handleCredentialResponse(response) {
     if (result.success) {
       currentUser = result.user;
       hideAuthModal();
-      renderProfile();
+      await refreshProfile();
+      await fetchMyTasks();
+      await loadTasks();
       loadFriends();
-      updatePointsDisplay();
-      updateStreakDisplay();
       showToast('Mit Google angemeldet!', 'success');
     }
   } catch (e) { showAuthError('Google-Login fehlgeschlagen.'); }
@@ -572,10 +608,8 @@ document.addEventListener('keydown', function(e) {
   }
 });
 
-// ===== STREAK =====
-let streakData = JSON.parse(localStorage.getItem('streakData')) || {
-  count: 0, lastUpdated: null, lastUpdateDate: null, completedToday: false
-};
+// ===== STREAK ===== (server-backed; do not use localStorage)
+let streakData = { count: 0, lastUpdated: null, lastUpdateDate: null, completedToday: false };
 
 function getToday() {
   const today = new Date();
@@ -611,7 +645,7 @@ function isPreviousDay(d1, d2) {
   return diff >= 1 && diff < 2;
 }
 
-function saveStreakData() { localStorage.setItem('streakData', JSON.stringify(streakData)); }
+function saveStreakData() { /* no-op: server-backed streak, do not persist locally */ }
 
 function incrementStreak() {
   const today = getToday();
@@ -636,12 +670,17 @@ function displayStreak() {
 }
 
 // ===== POINTS =====
-let userPoints = JSON.parse(localStorage.getItem('userPoints')) || { total: 0, completedTasks: [] };
-
-function savePoints() { localStorage.setItem('userPoints', JSON.stringify(userPoints)); }
+// ===== POINTS ===== (server-backed; do not use localStorage)
+let userPoints = { total: 0, completedTasks: [] };
+function savePoints() { /* no-op */ }
 
 function addPoints(amount, taskName) {
   if (amount <= 0) return false;
+  if (isLoggedIn()) {
+    // Points are managed server-side; refresh profile to get updated points
+    refreshProfile();
+    return true;
+  }
   userPoints.total += amount;
   userPoints.completedTasks.push({ taskName, points: amount, completedAt: new Date().toISOString() });
   savePoints();
@@ -655,11 +694,7 @@ function updatePointsDisplay() {
   const pointsEl = document.getElementById('stat-points');
   if (pointsEl) {
     let pts = userPoints.total;
-    if (isLoggedIn() && currentUser?.points > pts) {
-      pts = currentUser.points;
-      userPoints.total = pts;
-      savePoints();
-    }
+    if (isLoggedIn() && typeof currentUser?.points === 'number') pts = currentUser.points;
     pointsEl.textContent = pts;
   }
 }
@@ -676,7 +711,7 @@ function updateStreakDisplay() {
 // ===== TASKS =====
 let allTasks = { weekly: [], daily: [] };
 let currentTask = null;
-let acceptedTasks = JSON.parse(localStorage.getItem('acceptedTasks')) || [];
+let acceptedTasks = []; // server-synced, do not read from localStorage
 let taskCard = null;
 let swipeStartX = 0, swipeCurrentX = 0, isDraggingTaskCard = false;
 const SWIPE_THRESHOLD = 100, SWIPE_MAX_ROTATION = 12;
@@ -684,7 +719,7 @@ let decisionFeedbackTimeout = null;
 
 function normalizeTaskName(taskName) { return (taskName || '').trim().toLowerCase(); }
 
-function saveAcceptedTasks() { localStorage.setItem('acceptedTasks', JSON.stringify(acceptedTasks)); }
+function saveAcceptedTasks() { /* no-op: accepted tasks stored server-side */ }
 
 function removeEvidence(uploadId) {
   const parts = uploadId.split('_');
@@ -905,12 +940,21 @@ async function confirmTaskProof(challengeKey) {
     if (res && res.success) {
       // server awarded points and updated streak; refresh profile
       await refreshProfile();
+      // Server handled awarding; skip local awarding below
+      task.isCompleted = true;
+      task.status = 'completed';
+      task.completedAt = new Date().toISOString();
+      saveAcceptedTasks();
+      renderTodayChallenges();
+      renderDailyChallengeCard();
+      renderAcceptedTaskSection();
+      return;
     } else {
       console.error('Server complete task failed', res);
       // don't block local update - fallback to local
     }
   }
-
+  // Local fallback when not logged in or server failed
   task.isCompleted = true;
   task.status = 'completed';
   task.completedAt = new Date().toISOString();
@@ -946,15 +990,9 @@ async function loadTasks() {
     allTasks = await response.json();
     loadDailyTask();
   } catch (error) {
-    console.error('Fehler beim Laden der Tasks:', error);
-    // Fallback to JSON file if API fails
-    try {
-      const response = await fetch('../../assets/tasks.json');
-      allTasks = await response.json();
-      loadDailyTask();
-    } catch (error2) {
-      console.error('Fallback zu JSON auch fehlgeschlagen:', error2);
-    }
+    console.error('Fehler beim Laden der Tasks (API-only):', error);
+    allTasks = { weekly: [], daily: [] };
+    loadDailyTask();
   }
   syncAcceptedTasksToUI();
 }
@@ -1170,7 +1208,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     const task = { id: Date.now(), task: dailyTask.task, icon: dailyTask.icon, acceptedDate: new Date().toISOString(), status: 'accepted', isDaily: true };
     acceptedTasks.push(task);
     saveAcceptedTasks();
-    localStorage.setItem('ecoLastDailyChallengeDate', todayKey);
     renderDailyChallengeCard();
     renderTodayChallenges();
   });
@@ -1358,8 +1395,16 @@ function handleFileUpload(input) {
 }
 
 // ===== INIT =====
-loadTasks();
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+  // Ensure auth/profile/tasks are loaded in sequence
+  try {
+    await checkAuth();
+    if (isLoggedIn()) {
+      await refreshProfile();
+      await fetchMyTasks();
+    }
+    await loadTasks();
+  } catch (e) { console.error('Initialization failed:', e); }
   navigateTo('home');
   updateActPage('home');
 });

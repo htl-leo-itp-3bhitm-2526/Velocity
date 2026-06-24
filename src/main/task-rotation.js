@@ -2,18 +2,15 @@
 // Füge diesen Block NACH der bestehenden loadTasks()-Funktion ein
 // und ERSETZE die renderAcceptedTaskSection()-Logik
 
-const TASK_ROTATION_KEY = 'ecoTaskRotation';
+// In-memory rotation meta (do not persist to localStorage)
+let rotationMeta = { selectedTaskIds: [], lastRefresh: null };
 
-// Hole aktuelle Rotations-Metadaten
 function getTaskRotationMeta() {
-    return JSON.parse(localStorage.getItem(TASK_ROTATION_KEY)) || {
-        selectedTaskIds: [],
-        lastRefresh: null // ISO-String des letzten Tages
-    };
+    return rotationMeta;
 }
 
 function saveTaskRotationMeta(meta) {
-    localStorage.setItem(TASK_ROTATION_KEY, JSON.stringify(meta));
+    rotationMeta = meta;
 }
 
 // Gibt heute als YYYY-MM-DD zurück
@@ -147,83 +144,11 @@ function renderTaskList(container, tasks) {
 // ===== PATCH: renderAcceptedTaskSection =====
 // Überschreibe die bestehende Funktion so dass abgeschlossene Karten
 // KOMPLETT verschwinden statt als grüner Block zu bleiben.
-(function patchRenderAcceptedTaskSection() {
-    const _original = window.renderAcceptedTaskSection;
-    window.renderAcceptedTaskSection = function () {
-        const taskSection = document.getElementById('tasks');
-        if (!taskSection) return;
-
-        // Alte Klone entfernen
-        taskSection.querySelectorAll('.accepted-task-clone').forEach(el => el.remove());
-
-        acceptedTasks.forEach(task => {
-            // Abgeschlossene Aufgaben NICHT als Klon einblenden – einfach weglassen
-            if (task.isCompleted) {
-                removeTaskFromTaskSection(task.task);
-                return;
-            }
-
-            const normalizedName = normalizeTaskName(task.task);
-            const taskCards = document.querySelectorAll('#tasks .task-card:not(.accepted-task-clone)');
-
-            taskCards.forEach(card => {
-                const titleText = card.querySelector('.task-title')?.textContent || '';
-                const buttonTask = card.querySelector('.task-accept-btn')?.getAttribute('data-task') || '';
-
-                if (normalizeTaskName(titleText) !== normalizedName &&
-                    normalizeTaskName(buttonTask) !== normalizedName) return;
-
-                const clone = document.createElement('div');
-                clone.className = 'task-card task-card-accepted accepted-task-clone';
-                clone.setAttribute('data-task-key', getAcceptedTaskKey(task));
-                clone.innerHTML = buildAcceptedTaskCard(task);
-                card.insertAdjacentElement('afterend', clone);
-                card.style.display = 'none';
-            });
-        });
-    };
-})();
+// Use the main app's renderAcceptedTaskSection implementation (no local override)
 
 // ===== PATCH: confirmTaskProof =====
 // Nach Bestätigung: Karte sofort ausblenden + Klon entfernen
-(function patchConfirmTaskProof() {
-    const _original = window.confirmTaskProof;
-    window.confirmTaskProof = function (challengeKey) {
-        const taskIndex = acceptedTasks.findIndex(task => getAcceptedTaskKey(task) === challengeKey);
-        if (taskIndex === -1) return;
-
-        const task = acceptedTasks[taskIndex];
-        if (!task.proofFileDatas || task.proofFileDatas.length === 0 || task.isCompleted) return;
-
-        task.isCompleted = true;
-        task.status = 'completed';
-        task.completedAt = new Date().toISOString();
-
-        // Punkte vergeben
-        let points = task.points || 0;
-        if (!points) {
-            const foundTask = (allTasks.weekly || []).concat(allTasks.daily || [])
-                .find(t => normalizeTaskName(t.task) === normalizeTaskName(task.task));
-            if (foundTask) points = extractPointsFromTask(foundTask);
-        }
-        if (points > 0) addPoints(points, task.task);
-        if (task.isDaily) incrementStreak();
-
-        saveAcceptedTasks();
-
-        // Klon sofort aus DOM entfernen
-        const clone = document.querySelector(`.accepted-task-clone[data-task-key="${CSS.escape(challengeKey)}"]`);
-        if (clone) {
-            clone.style.transition = 'opacity 0.35s ease, transform 0.35s ease';
-            clone.style.opacity = '0';
-            clone.style.transform = 'scale(0.95)';
-            setTimeout(() => clone.remove(), 360);
-        }
-
-        renderTodayChallenges();
-        renderDailyChallengeCard();
-    };
-})();
+// Use the main app's confirmTaskProof implementation (no local override)
 
 // ===== INTEGRATION: loadTasks patchen =====
 // Hänge renderTasksSection an den vorhandenen loadTasks-Aufruf
