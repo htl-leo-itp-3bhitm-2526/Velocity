@@ -50,7 +50,7 @@ CREATE TABLE IF NOT EXISTS user_tasks (
     status ENUM('accepted', 'completed', 'cancelled') DEFAULT 'accepted',
     accepted_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     completed_date TIMESTAMP NULL,
-    proof_images TEXT DEFAULT NULL,
+    proof_images LONGTEXT DEFAULT NULL,
     proof_uploaded_at TIMESTAMP NULL,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

@@ -292,8 +292,12 @@
     <div id="profile" class="full-screen">
     <div class="profile-card">
         <div class="profile-top-row">
-            <div class="avatar-container">
+            <div class="avatar-container" id="avatarContainer" style="position:relative;cursor:pointer;">
                 <img id="user-avatar" src="avatar.png" alt="User">
+                <div class="avatar-upload-overlay" id="avatarUploadOverlay">
+                    <i class="fas fa-camera"></i>
+                </div>
+                <input type="file" id="avatarUploadInput" accept="image/*" style="display:none">
             </div>
             <div class="streak-badge">
                 <i class="fas fa-leaf"></i>

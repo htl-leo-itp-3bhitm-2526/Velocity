@@ -110,6 +110,11 @@ function handleUpdateProfile($user) {
         $params[] = trim($input['name']);
         $types .= 's';
     }
+    if (isset($input['picture'])) {
+        $updates[] = "picture = ?";
+        $params[] = $input['picture']; // base64 data URI
+        $types .= 's';
+    }
 
     if (empty($updates)) {
         sendError("No fields to update");

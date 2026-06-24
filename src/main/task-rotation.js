@@ -19,6 +19,14 @@ function escapeHtmlText(text) {
     return s;
 }
 
+function normalizeTaskName(taskName) {
+    return (taskName || '').trim().toLowerCase();
+}
+
+function getAcceptedTaskKey(task) {
+    return normalizeTaskName(task.task) + '|' + (task.acceptedDate || '');
+}
+
 // Rendert die Tasks-Seite dynamisch
 function renderTasksSection(allTasks) {
     var weeklyContainer = document.getElementById('weekly-tasks-container');
@@ -30,12 +38,79 @@ function renderTasksSection(allTasks) {
     // Daily tasks kommen vom Server rotiert (7 Stück pro Tag)
     var dailyTasks = allTasks.daily || [];
 
-    renderTaskList(weeklyContainer, weeklyTasks);
-    renderTaskList(otherContainer, dailyTasks);
+    renderTaskList(weeklyContainer, weeklyTasks, false);
+    renderTaskList(otherContainer, dailyTasks, true);
     renderTaskRefreshInfo(weeklyTasks.length + dailyTasks.length);
 
-    // Bereits akzeptierte Aufgaben ausblenden
+    // Zeige bereits akzeptierte Aufgaben als erledigt an
     syncAcceptedTasksToUI();
+}
+
+function isTaskAlreadyAccepted(taskName) {
+    var nn = normalizeTaskName(taskName);
+    if (typeof acceptedTasks === 'undefined' || !acceptedTasks) return false;
+    for (var i = 0; i < acceptedTasks.length; i++) {
+        var t = acceptedTasks[i];
+        if (normalizeTaskName(t.task) === nn && t.status !== 'completed' && t.status !== 'cancelled') return true;
+    }
+    return false;
+}
+
+function syncAcceptedTasksToUI() {
+    if (typeof acceptedTasks === 'undefined' || !acceptedTasks) return;
+    
+    var acceptedKeys = [];
+    for (var i = 0; i < acceptedTasks.length; i++) {
+        var t = acceptedTasks[i];
+        if (t.status !== 'completed' && t.status !== 'cancelled') {
+            acceptedKeys.push(normalizeTaskName(t.task));
+        }
+    }
+    
+    document.querySelectorAll('#tasks .task-card').forEach(function(card) {
+        var title = card.querySelector('.task-title')?.textContent || '';
+        var btn = card.querySelector('.task-accept-btn')?.getAttribute('data-task') || '';
+        var nn = normalizeTaskName(title || btn);
+        
+        if (acceptedKeys.indexOf(nn) !== -1) {
+            card.style.display = 'none';
+        } else {
+            card.style.display = '';
+        }
+    });
+        }
+
+function renderTaskList(container, tasks, isDaily) {
+    container.style.display = 'block';
+    if (!tasks || tasks.length === 0) {
+        container.innerHTML = '<p class="today-challenges-empty">Keine Aufgaben verfügbar.</p>';
+        return;
+    }
+    container.innerHTML = '';
+    tasks.forEach(function(task) {
+        var accepted = isTaskAlreadyAccepted(task.task);
+        var btnText = accepted ? '<i class="fas fa-check"></i> Akzeptiert' : 'Akzeptieren';
+        var btnDisabled = accepted ? 'disabled' : '';
+        var btnClass = accepted ? 'task-accept-btn-accepted' : '';
+        var wrapper = document.createElement('div');
+        wrapper.style.cssText = 'display:block;width:100%;';
+        var card = document.createElement('div');
+        card.className = 'task-card';
+        card.setAttribute('data-task-name', task.task);
+        card.innerHTML =
+            '<div class="task-icon"><i class="' + (task.icon || 'fas fa-leaf') + '"></i></div>' +
+            '<div class="task-content">' +
+                '<h3 class="task-title">' + escapeHtmlText(task.task) + '</h3>' +
+                '<p class="task-description">Erledige diese Aufgabe und helfe der Umwelt!</p>' +
+                '<div class="task-footer">' +
+                    '<span class="task-points"><i class="fas fa-star"></i> ' + (task.points || 20) + ' Punkte</span>' +
+                    '<span class="task-time"><i class="fas fa-clock"></i> Bis Mitternacht</span>' +
+                '</div>' +
+            '</div>' +
+            '<button class="task-accept-btn ' + btnClass + '" data-task="' + escapeHtmlText(task.task) + '" data-icon="' + (task.icon || 'fas fa-leaf') + '" data-points="' + (task.points || 20) + '" ' + btnDisabled + '>' + btnText + '</button>';
+        wrapper.appendChild(card);
+        container.appendChild(wrapper);
+    });
 }
 
 function renderTaskRefreshInfo(count) {
@@ -67,49 +142,22 @@ function updateTaskRefreshCountdown() {
     countdownEl.textContent = remaining.hours + 'h ' + remaining.minutes + 'm ' + remaining.seconds + 's bis zur Aktualisierung';
 }
 
-function renderTaskList(container, tasks) {
-    container.innerHTML = '';
-    if (tasks.length === 0) {
-        container.innerHTML = '<p class="today-challenges-empty">Keine Aufgaben verfügbar.</p>';
-        return;
-    }
-    tasks.forEach(function(task) {
-        var card = document.createElement('div');
-        card.className = 'task-card';
-        card.innerHTML =
-            '<div class="task-icon">' +
-                '<i class="' + (task.icon || 'fas fa-leaf') + '"></i>' +
-            '</div>' +
-            '<div class="task-content">' +
-                '<h3 class="task-title">' + escapeHtmlText(task.task) + '</h3>' +
-                '<p class="task-description">Erledige diese Aufgabe und helfe der Umwelt!</p>' +
-                '<div class="task-footer">' +
-                    '<span class="task-points"><i class="fas fa-star"></i> ' + (task.points || 20) + ' Punkte</span>' +
-                    '<span class="task-time"><i class="fas fa-clock"></i> Bis Mitternacht</span>' +
-                '</div>' +
-            '</div>' +
-            '<button class="task-accept-btn" data-task="' + escapeHtmlText(task.task) + '" data-icon="' + (task.icon || 'fas fa-leaf') + '">Akzeptieren</button>';
-        container.appendChild(card);
-    });
-}
-
 // ===== INTEGRATION: loadTasks patchen =====
-// Hänge renderTasksSection an den vorhandenen loadTasks-Aufruf
 document.addEventListener('DOMContentLoaded', function() {
-    // Warte bis allTasks geladen ist, dann Rotation anwenden
+    updateTaskRefreshCountdown();
+    setInterval(updateTaskRefreshCountdown, 1000);
+    
+    // Warte bis loadTasks fertig ist und acceptedTasks mit Updates verfügbar ist
+    var maxWait = 0;
     var _checkInterval = setInterval(function() {
-        if ((allTasks.weekly || []).length > 0 || (allTasks.daily || []).length > 0) {
+        maxWait++;
+        if (typeof allTasks !== 'undefined' && ((allTasks.weekly && allTasks.weekly.length > 0) || (allTasks.daily && allTasks.daily.length > 0))) {
             clearInterval(_checkInterval);
             renderTasksSection(allTasks);
         }
+        // Max 10 seconds wait
+        if (maxWait >= 1000) {
+            clearInterval(_checkInterval);
+        }
     }, 100);
-
-    // Fallback nach 3s
-    setTimeout(function() {
-        clearInterval(_checkInterval);
-        if ((allTasks.weekly || []).length > 0 || (allTasks.daily || []).length > 0) renderTasksSection(allTasks);
-    }, 3000);
-
-    updateTaskRefreshCountdown();
-    setInterval(updateTaskRefreshCountdown, 1000);
 });

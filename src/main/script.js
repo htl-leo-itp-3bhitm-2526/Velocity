@@ -203,34 +203,39 @@ function refreshVisualStats() {
 
 // Fetch user's accepted tasks from API (server-backed)
 async function fetchMyTasks() {
-  acceptedTasks = [];
-  if (!isLoggedIn()) {
-    renderAcceptedTaskSection();
-    renderTodayChallenges();
-    return;
-  }
-  try {
-    const res = await fetch(`${API_BASE}/tasks.php?action=my_tasks`, { credentials: 'same-origin' });
-    const data = await res.json();
-    if (data && Array.isArray(data.tasks)) {
-      acceptedTasks = data.tasks.map(t => ({
-        id: Date.now() + Math.floor(Math.random()*1000),
-        serverId: t.id,
-        task: t.task_name,
-        icon: t.task_icon,
-        points: t.points,
-        isDaily: t.is_daily,
-        status: t.status,
-        acceptedDate: t.accepted_date,
-        completedAt: t.completed_date,
-        proofUploadedAt: t.proof_uploaded_at
-      }));
-    }
-  } catch (e) { console.error('fetchMyTasks failed', e); }
-  renderAcceptedTaskSection();
-  renderTodayChallenges();
-  loadRecentUploads();
-}
+   acceptedTasks = [];
+   if (!isLoggedIn()) {
+     renderAcceptedTaskSection();
+     renderTodayChallenges();
+     renderTasksSection({weekly: [], daily: []});
+     return;
+   }
+   try {
+     const res = await fetch(`${API_BASE}/tasks.php?action=my_tasks`, { credentials: 'same-origin' });
+     const data = await res.json();
+     if (data && Array.isArray(data.tasks)) {
+       acceptedTasks = data.tasks.map(t => ({
+         id: Date.now() + Math.floor(Math.random()*1000),
+         serverId: t.id,
+         task: t.task_name,
+         icon: t.task_icon,
+         points: t.points,
+         isDaily: t.is_daily,
+         status: t.status,
+         acceptedDate: t.accepted_date,
+         completedAt: t.completed_date,
+         proofUploadedAt: t.proof_uploaded_at,
+         hasProof: t.has_proof || false
+       }));
+     }
+   } catch (e) { console.error('fetchMyTasks failed', e); }
+   renderAcceptedTaskSection();
+   renderTodayChallenges();
+   if (typeof renderTasksSection === 'function') {
+     renderTasksSection(typeof allTasks !== 'undefined' ? allTasks : {weekly: [], daily: []});
+   }
+   loadRecentUploads();
+ }
 
 function requireAuth(action) {
   if (!isLoggedIn()) {
@@ -351,8 +356,8 @@ function showToast(message, type) {
   if (!container) return;
   const toast = document.createElement('div');
   toast.className = 'badge-toast show';
-  const icon = type === 'success' ? 'check-circle' : type === 'warning' ? 'exclamation-triangle' : 'info-circle';
-  const color = type === 'success' ? '#4caf50' : type === 'warning' ? '#ff9800' : '#2196f3';
+  const icon = type === 'success' ? 'check-circle' : type === 'warning' ? 'exclamation-triangle' : type === 'error' ? 'times-circle' : 'info-circle';
+  const color = type === 'success' ? '#4caf50' : type === 'warning' ? '#ff9800' : type === 'error' ? '#f44336' : '#2196f3';
   toast.innerHTML = '<div class="badge-toast-content"><div class="badge-toast-icon" style="color:' + color + '"><i class="fas fa-' + icon + '"></i></div><div class="badge-toast-text"><div class="badge-toast-name">' + escapeHtml(message) + '</div></div></div>';
   container.appendChild(toast);
   setTimeout(function() { toast.remove(); }, 4000);
@@ -699,11 +704,15 @@ function buildAcceptedTaskCard(task) {
   var pNames = Array.isArray(task.proofFileNames) ? task.proofFileNames : [];
   var done = Boolean(task.isCompleted) || task.status === 'completed';
   var pts = task.points || 0;
-  var state = pDatas.length > 0 ? '<p class="today-proof-state uploaded"><i class="fas fa-check-circle"></i> ' + (pNames.length || pDatas.length) + ' Beweis(e) hochgeladen</p>' : '<p class="today-proof-state"><i class="fas fa-image"></i> Noch kein Beweis hochgeladen</p>';
+  // hasProof is true if we have local data OR server confirmed proof exists
+  var hasProofOnServer = task.hasProof || Boolean(task.proofUploadedAt);
+  var hasProofLocal = pDatas.length > 0;
+  var hasAnyProof = hasProofLocal || hasProofOnServer;
+  var state = hasAnyProof ? '<p class="today-proof-state uploaded"><i class="fas fa-check-circle"></i> ' + (pNames.length || pDatas.length || 1) + ' Beweis(e) hochgeladen</p>' : '<p class="today-proof-state"><i class="fas fa-image"></i> Noch kein Beweis hochgeladen</p>';
   var img = '';
   if (pDatas.length > 0) { img = '<div class="today-proof-image-container">'; for (var j = 0; j < pDatas.length; j++) { img += '<img src="' + pDatas[j] + '" alt="Beweis-Foto" class="today-proof-image">'; } img += '</div>'; }
   var upBtn = done ? '' : '<button class="accepted-task-btn task-proof-upload-btn" type="button" data-task-key="' + escapeHtml(key) + '"><i class="fas fa-upload"></i> Beweis hochladen</button>';
-  var cfBtn = (pDatas.length > 0 && !done) ? '<button class="accepted-task-btn task-proof-confirm-btn" type="button" data-task-key="' + escapeHtml(key) + '"><i class="fas fa-check"></i> Punkte best\u00e4tigen</button>' : '';
+  var cfBtn = (hasAnyProof && !done) ? '<button class="accepted-task-btn task-proof-confirm-btn" type="button" data-task-key="' + escapeHtml(key) + '"><i class="fas fa-check"></i> Punkte best\u00e4tigen</button>' : '';
   var pInp = done ? '' : '<input class="task-proof-upload-input" type="file" accept="image/*" multiple data-task-key="' + escapeHtml(key) + '">';
   var doneNote = done ? '<p class="today-proof-state completed"><i class="fas fa-check-circle"></i> Aufgabe abgeschlossen</p>' : '';
   return '<div class="accepted-task-inner"><div class="accepted-task-icon"><i class="' + (task.icon || 'fas fa-check') + '"></i></div><h3 class="accepted-task-title">' + escapeHtml(task.task) + '</h3><div class="accepted-task-proof-area">' + img + state + doneNote + upBtn + pInp + cfBtn + '</div><div class="accepted-task-actions"><span class="accepted-task-btn" role="note"><i class="fas fa-star"></i> ' + pts + ' Punkte warten auf Best\u00e4tigung</span></div></div>';
@@ -782,8 +791,9 @@ async function saveProofUpload(challengeKey, fileNames, fileDatas) {
   loadRecentUploads();
   renderDailyChallengeCard();
   renderAcceptedTaskSection();
-  var sid = acceptedTasks[idx].serverId || acceptedTasks[idx].server_id || acceptedTasks[idx].id;
-  if (isLoggedIn() && sid) { var res = await apiUploadProof(sid, fileNames, fileDatas); if (res && res.success) { await refreshProfile(); } }
+  var sid = acceptedTasks[idx].serverId || acceptedTasks[idx].server_id;
+  // Only upload to server if we have a real server task ID (not a local Date.now() ID)
+  if (isLoggedIn() && sid) { var res = await apiUploadProof(sid, fileNames, fileDatas); if (res && res.success) { acceptedTasks[idx].hasProof = true; await refreshProfile(); } }
 }
 
 async function confirmTaskProof(challengeKey) {
@@ -791,14 +801,42 @@ async function confirmTaskProof(challengeKey) {
   for (var i = 0; i < acceptedTasks.length; i++) { if (getAcceptedTaskKey(acceptedTasks[i]) === challengeKey) { idx = i; break; } }
   if (idx === -1) return;
   var task = acceptedTasks[idx];
-  if (!task.proofFileDatas || task.proofFileDatas.length === 0 || task.isCompleted) return;
+  // Allow confirm if local proof data exists OR server has proof (hasProof/proofUploadedAt)
+  var hasProofLocal = task.proofFileDatas && task.proofFileDatas.length > 0;
+  var hasProofOnServer = task.hasProof || Boolean(task.proofUploadedAt);
+  if ((!hasProofLocal && !hasProofOnServer) || task.isCompleted) return;
   var sid = task.serverId || task.server_id || task.id;
   if (isLoggedIn() && sid) {
+    // If we have local proof but it hasn't been uploaded yet, upload it first
+    if (hasProofLocal && !hasProofOnServer) {
+      var uploadRes = await apiUploadProof(sid, task.proofFileNames || [], task.proofFileDatas);
+      if (!uploadRes || !uploadRes.success) {
+        showToast('Fehler beim Hochladen des Beweises', 'error');
+        return;
+      }
+      task.hasProof = true;
+    }
     var res = await apiCompleteTask(sid);
     if (res && res.success) {
       task.isCompleted = true;
       task.status = 'completed';
       task.completedAt = new Date().toISOString();
+      // Sofort Punkte lokal aktualisieren damit das UI nicht auf den Server-Fetch wartet
+      if (currentUser && res.points_awarded > 0) {
+        currentUser.points = (currentUser.points || 0) + res.points_awarded;
+        currentUser.xp = (currentUser.xp || 0) + (res.xp_gained || res.points_awarded);
+        if (res.new_level) { currentUser.level = res.new_level; currentUser.level_title = res.new_title || currentUser.level_title; }
+        // Streak animieren wenn Daily Challenge
+        if (task.isDaily) {
+          currentUser.streak = (currentUser.streak || 0) + 1;
+          var scEl = document.getElementById('streakCount');
+          if (scEl) animateCounter(scEl, currentUser.streak, 800);
+          var sdEl = document.getElementById('streak-days');
+          if (sdEl) sdEl.textContent = currentUser.streak + ' TAGE';
+          updateStreakFlameStage(currentUser.streak);
+        }
+        refreshVisualStats();
+      }
       await refreshProfile();
       saveAcceptedTasks();
       renderAcceptedTaskSection();
@@ -806,12 +844,18 @@ async function confirmTaskProof(challengeKey) {
       renderDailyChallengeCard();
       loadRecentUploads();
       var msg = '+' + (res.points_awarded || 0) + ' Punkte erhalten!';
-      if (res.water_saved > 0) msg += ' \u{1F4A7}+' + res.water_saved + 'L Wasser';
-      if (res.trash_saved > 0) msg += ' \u{1F5D1}\uFE0F-' + res.trash_saved + 'kg M\u00fcll';
-      if (res.new_level) msg += ' \u{1F389} Level ' + res.new_level + '!';
+      if (task.isDaily) msg += ' 🔥 Streak +1!';
+      if (res.water_saved > 0) msg += ' 💧+' + res.water_saved + 'L Wasser';
+      if (res.trash_saved > 0) msg += ' 🗑️-' + res.trash_saved + 'kg Müll';
+      if (res.new_level) msg += ' 🎉 Level ' + res.new_level + '!';
       showToast(msg, 'success');
       return;
-    } else { console.error('Server complete failed', res); }
+    } else {
+      var errMsg = (res && res.error) ? res.error : 'Server-Fehler beim Bestätigen';
+      console.error('Server complete failed', res);
+      showToast('Fehler: ' + errMsg, 'error');
+      return;
+    }
   }
   task.isCompleted = true;
   task.status = 'completed';
@@ -887,13 +931,16 @@ function displayDailyChallenge(task, isAccepted) {
   }
   if (!proofArea) return;
   if (!isAccepted) { proofArea.innerHTML = ''; return; }
-  var state = pDatas.length > 0 ? '<p class="today-proof-state uploaded"><i class="fas fa-check-circle"></i> ' + (pNames.length || pDatas.length) + ' Beweis(e) hochgeladen</p>' : '<p class="today-proof-state"><i class="fas fa-image"></i> Noch kein Beweis hochgeladen</p>';
+  var hasProofOnServer = task.hasProof || Boolean(task.proofUploadedAt);
+  var hasAnyProof = pDatas.length > 0 || hasProofOnServer;
+  var proofCount = pDatas.length || (hasProofOnServer ? 1 : 0);
+  var state = hasAnyProof ? '<p class="today-proof-state uploaded"><i class="fas fa-check-circle"></i> ' + proofCount + ' Beweis(e) hochgeladen</p>' : '<p class="today-proof-state"><i class="fas fa-image"></i> Noch kein Beweis hochgeladen</p>';
   var img = '';
   if (pDatas.length > 0) { img = '<div class="today-proof-image-container">'; for (var j = 0; j < pDatas.length; j++) { img += '<img src="' + pDatas[j] + '" alt="Beweis-Foto" class="today-proof-image">'; } img += '</div>'; }
   var up = done ? '' : '<button class="btn-primary btn-challenge today-challenge-upload-btn daily-challenge-upload-btn" type="button" data-challenge-key="' + escapeHtml(ckey) + '"><i class="fas fa-upload"></i> Beweis hochladen</button>';
-  var cf = (pDatas.length > 0 && !done) ? '<button class="btn-primary btn-challenge today-challenge-confirm-btn daily-challenge-confirm-btn" type="button" data-challenge-key="' + escapeHtml(ckey) + '"><i class="fas fa-check"></i> Hochladen best\u00e4tigen</button>' : '';
-  var inp = done ? '' : '<input class="today-challenge-upload-input daily-challenge-upload-input" type="file" accept="image/*" multiple id="dailyChallengeUploadInput" data-challenge-key="' + escapeHtml(ckey) + '">';
-  var note = done ? '<p class="today-proof-state completed"><i class="fas fa-check-circle"></i> Aufgabe abgeschlossen</p>' : '';
+  var cf = (hasAnyProof && !done) ? '<button class="btn-primary btn-challenge today-challenge-confirm-btn daily-challenge-confirm-btn" type="button" data-challenge-key="' + escapeHtml(ckey) + '"><i class="fas fa-check"></i> Hochladen bestätigen</button>' : '';
+  var inp = done ? '' : '<input class="today-challenge-upload-input daily-challenge-upload-input" type="file" accept="image/*" multiple id="dailyChallengeUploadInput" data-challenge-key="' + escapeHtml(ckey) + '">';  
+  var note = done ? '<p class="today-proof-state completed"><i class="fas fa-check-circle"></i> Aufgabe abgeschlossen — Streak +1!</p>' : '';
   proofArea.innerHTML = img + state + note + up + inp + cf;
 }
 
@@ -948,6 +995,41 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('logoutBtn').addEventListener('click', handleLogout);
   document.querySelector('.logout-link').addEventListener('click', (e) => { e.preventDefault(); handleLogout(); });
   document.getElementById('authModal').addEventListener('click', (e) => { if (e.target === e.currentTarget) hideAuthModal(); });
+
+  // Avatar upload
+  var avatarContainer = document.getElementById('avatarContainer');
+  var avatarInput = document.getElementById('avatarUploadInput');
+  if (avatarContainer && avatarInput) {
+    avatarContainer.addEventListener('click', function() {
+      if (!isLoggedIn()) { showToast('Bitte zuerst anmelden.', 'warning'); return; }
+      avatarInput.click();
+    });
+    avatarInput.addEventListener('change', async function() {
+      var file = avatarInput.files[0];
+      if (!file) return;
+      var reader = new FileReader();
+      reader.onload = async function(e) {
+        var dataUrl = e.target.result;
+        // Sofort lokal anzeigen
+        var avatarImg = document.getElementById('user-avatar');
+        if (avatarImg) avatarImg.src = dataUrl;
+        if (currentUser) currentUser.picture = dataUrl;
+        // Zum Server speichern
+        try {
+          var res = await fetch(API_BASE + '/profile.php?action=update', {
+            method: 'POST', credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ picture: dataUrl })
+          });
+          var data = await res.json();
+          if (data && data.success) { showToast('Profilbild gespeichert!', 'success'); }
+          else { showToast('Fehler beim Speichern.', 'error'); }
+        } catch(err) { showToast('Fehler beim Speichern.', 'error'); }
+        avatarInput.value = '';
+      };
+      reader.readAsDataURL(file);
+    });
+  }
   
   await checkAuth();
   displayStreak();
@@ -1095,8 +1177,8 @@ document.addEventListener('click', function(e) {
         return;
       }
       var card = btn.closest('.task-card');
-      var pts = 0;
-      if (card) { var ptsText = card.querySelector('.task-points')?.textContent || ''; var m = ptsText.match(/(\d+)\s*Punkte/); if (m) pts = parseInt(m[1], 10); }
+      var pts = parseInt(btn.getAttribute('data-points') || '0', 10);
+      if (!pts && card) { var ptsText = card.querySelector('.task-points')?.textContent || ''; var m = ptsText.match(/(\d+)\s*Punkte/); if (m) pts = parseInt(m[1], 10); }
       if (isLoggedIn()) {
         var res = await apiAcceptTask(taskName, taskIcon, pts, 0);
         if (res && !res.error && res.task && res.task.id) {

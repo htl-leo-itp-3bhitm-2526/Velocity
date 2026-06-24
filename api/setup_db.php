@@ -30,7 +30,7 @@ $conn->query("CREATE TABLE IF NOT EXISTS users (
     id INT AUTO_INCREMENT PRIMARY KEY,
     email VARCHAR(255) NOT NULL UNIQUE,
     name VARCHAR(255) NOT NULL,
-    picture VARCHAR(500) DEFAULT '',
+    picture LONGTEXT,
     password_hash VARCHAR(255) DEFAULT NULL,
     auth_provider ENUM('google', 'email') DEFAULT 'google',
     streak INT DEFAULT 0,
@@ -66,7 +66,7 @@ $conn->query("CREATE TABLE IF NOT EXISTS user_tasks (
     status ENUM('accepted', 'completed', 'cancelled') DEFAULT 'accepted',
     accepted_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     completed_date TIMESTAMP NULL,
-    proof_images TEXT DEFAULT NULL,
+    proof_images LONGTEXT DEFAULT NULL,
     proof_uploaded_at TIMESTAMP NULL,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
@@ -108,6 +108,11 @@ $conn->query("CREATE TABLE IF NOT EXISTS user_badges (
 
 // Drop old available_tasks table if it exists (replaced by task_definitions)
 $conn->query("DROP TABLE IF EXISTS available_tasks");
+
+// Migration: upgrade proof_images from TEXT to LONGTEXT to support large base64 images
+$conn->query("ALTER TABLE user_tasks MODIFY COLUMN proof_images LONGTEXT DEFAULT NULL");
+// Migration: upgrade picture to LONGTEXT to support base64 profile photos
+$conn->query("ALTER TABLE users MODIFY COLUMN picture LONGTEXT");
 
 // ===== SEED DATA: Clear existing and re-insert =====
 $conn->query("DELETE FROM task_definitions");
