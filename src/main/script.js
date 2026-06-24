@@ -118,6 +118,53 @@ function isLoggedIn() {
   return currentUser !== null;
 }
 
+// ----- API helpers for tasks/profile -----
+async function apiAcceptTask(taskName, taskIcon, points = 0, isDaily = 0) {
+  try {
+    const res = await fetch(`${API_BASE}/tasks.php?action=accept`, {
+      method: 'POST', credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ task_name: taskName, task_icon: taskIcon, points, is_daily: isDaily })
+    });
+    return await res.json();
+  } catch (e) { console.error('apiAcceptTask failed', e); return { error: e.message }; }
+}
+
+async function apiUploadProof(serverTaskId, fileNames, fileDatas) {
+  try {
+    const res = await fetch(`${API_BASE}/tasks.php?action=upload_proof`, {
+      method: 'POST', credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ task_id: serverTaskId, proof_images: fileDatas, file_names: fileNames })
+    });
+    return await res.json();
+  } catch (e) { console.error('apiUploadProof failed', e); return { error: e.message }; }
+}
+
+async function apiCompleteTask(serverTaskId) {
+  try {
+    const res = await fetch(`${API_BASE}/tasks.php?action=complete`, {
+      method: 'POST', credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ task_id: serverTaskId })
+    });
+    return await res.json();
+  } catch (e) { console.error('apiCompleteTask failed', e); return { error: e.message }; }
+}
+
+async function refreshProfile() {
+  try {
+    const res = await fetch(`${API_BASE}/profile.php?action=get`, { credentials: 'same-origin' });
+    const data = await res.json();
+    if (data && data.profile) {
+      currentUser = data.profile;
+      renderProfile();
+      displayStreak();
+      updatePointsDisplay();
+    }
+  } catch (e) { console.error('refreshProfile failed', e); }
+}
+
 function requireAuth(action) {
   if (!isLoggedIn()) {
     showAuthModal();
@@ -580,9 +627,11 @@ function incrementStreak() {
 
 function displayStreak() {
   const el = document.getElementById('streakCount');
-  if (el && streakData.count !== parseInt(el.textContent, 10)) {
-    el.textContent = streakData.count;
-    updateStreakFlameStage(streakData.count);
+  // Prefer server profile streak when logged in, otherwise use local streakData
+  const value = isLoggedIn() ? (currentUser?.streak || 0) : (streakData.count || 0);
+  if (el && value !== parseInt(el.textContent, 10)) {
+    el.textContent = value;
+    updateStreakFlameStage(value);
   }
 }
 
@@ -818,7 +867,7 @@ function renderTodayChallenges() {
   }).join('');
 }
 
-function saveProofUpload(challengeKey, fileNames, fileDatas) {
+async function saveProofUpload(challengeKey, fileNames, fileDatas) {
   const taskIndex = acceptedTasks.findIndex(task => getAcceptedTaskKey(task) === challengeKey);
   if (taskIndex === -1) return;
   if (!Array.isArray(fileNames)) fileNames = [fileNames];
@@ -830,13 +879,38 @@ function saveProofUpload(challengeKey, fileNames, fileDatas) {
   loadRecentUploads();
   renderDailyChallengeCard();
   renderAcceptedTaskSection();
+
+  // If logged in and task was created on server, upload proof to API
+  const serverId = acceptedTasks[taskIndex].serverId || acceptedTasks[taskIndex].server_id || acceptedTasks[taskIndex].id;
+  if (isLoggedIn() && serverId) {
+    const res = await apiUploadProof(serverId, fileNames, fileDatas);
+    if (res && res.success) {
+      await refreshProfile();
+    } else {
+      console.error('Server proof upload failed', res);
+    }
+  }
 }
 
-function confirmTaskProof(challengeKey) {
+async function confirmTaskProof(challengeKey) {
   const taskIndex = acceptedTasks.findIndex(task => getAcceptedTaskKey(task) === challengeKey);
   if (taskIndex === -1) return;
   const task = acceptedTasks[taskIndex];
   if (!task.proofFileDatas || task.proofFileDatas.length === 0 || task.isCompleted) return;
+
+  // If logged in and task exists on server, call complete API
+  const serverId = task.serverId || task.server_id || task.id;
+  if (isLoggedIn() && serverId) {
+    const res = await apiCompleteTask(serverId);
+    if (res && res.success) {
+      // server awarded points and updated streak; refresh profile
+      await refreshProfile();
+    } else {
+      console.error('Server complete task failed', res);
+      // don't block local update - fallback to local
+    }
+  }
+
   task.isCompleted = true;
   task.status = 'completed';
   task.completedAt = new Date().toISOString();
@@ -1203,27 +1277,48 @@ document.addEventListener('click', function(e) {
   // Task accept button - requires auth!
   const btn = e.target.closest('.task-accept-btn');
   if (btn) {
-    if (!requireAuth('Aufgaben anzunehmen')) return;
-    const taskName = btn.getAttribute('data-task');
-    const taskIcon = btn.getAttribute('data-icon');
-    if (isTaskAlreadyAccepted(taskName)) {
-      removeTaskFromTaskSection(taskName);
+    (async () => {
+      if (!requireAuth('Aufgaben anzunehmen')) return;
+      const taskName = btn.getAttribute('data-task');
+      const taskIcon = btn.getAttribute('data-icon');
+      if (isTaskAlreadyAccepted(taskName)) {
+        removeTaskFromTaskSection(taskName);
+        renderAcceptedTaskSection();
+        renderTodayChallenges();
+        return;
+      }
+      const taskCard = btn.closest('.task-card');
+      let points = 0;
+      if (taskCard) {
+        const pointsText = taskCard.querySelector('.task-points')?.textContent || '';
+        const m = pointsText.match(/(\d+)\s*Punkte/);
+        if (m) points = parseInt(m[1], 10);
+      }
+
+      if (isLoggedIn()) {
+        const res = await apiAcceptTask(taskName, taskIcon, points, 0);
+        if (res && !res.error && res.task && res.task.id) {
+          const serverId = res.task.id;
+          const task = { id: Date.now(), serverId, task: taskName, icon: taskIcon, points, acceptedDate: new Date().toISOString(), status: 'accepted' };
+          acceptedTasks.push(task);
+          saveAcceptedTasks();
+          renderAcceptedTaskSection();
+          renderTodayChallenges();
+          await refreshProfile();
+          return;
+        } else {
+          console.error('API accept failed', res);
+          // fallback to local accept
+        }
+      }
+
+      // Local fallback (not logged in or API failed)
+      const task = { id: Date.now(), task: taskName, icon: taskIcon, points, acceptedDate: new Date().toISOString(), status: 'accepted' };
+      acceptedTasks.push(task);
+      saveAcceptedTasks();
       renderAcceptedTaskSection();
       renderTodayChallenges();
-      return;
-    }
-    const taskCard = btn.closest('.task-card');
-    let points = 0;
-    if (taskCard) {
-      const pointsText = taskCard.querySelector('.task-points')?.textContent || '';
-      const m = pointsText.match(/(\d+)\s*Punkte/);
-      if (m) points = parseInt(m[1], 10);
-    }
-    const task = { id: Date.now(), task: taskName, icon: taskIcon, points, acceptedDate: new Date().toISOString(), status: 'accepted' };
-    acceptedTasks.push(task);
-    saveAcceptedTasks();
-    renderAcceptedTaskSection();
-    renderTodayChallenges();
+    })();
   }
 });
 
