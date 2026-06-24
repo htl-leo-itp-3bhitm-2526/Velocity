@@ -1709,6 +1709,26 @@ h1 { color: #4a7c44; font-size: 1.2rem; margin-bottom: 15px; }
     font-size: 1.2rem;
     margin: 20px 0;
 }
+.task-refresh-info {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.75rem;
+    background: rgba(122, 182, 110, 0.1);
+    border: 1px solid rgba(122, 182, 110, 0.25);
+    border-radius: 20px;
+    padding: 18px 20px;
+    margin-bottom: 20px;
+    font-weight: 700;
+    color: #2f5336;
+}
+.task-refresh-info span {
+    display: inline-block;
+}
+.task-refresh-info #taskRefreshCountdown {
+    color: var(--primary-color);
+}
 .task-card {
     background: var(--card-background);
     border-radius: 20px;

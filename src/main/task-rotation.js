@@ -7,10 +7,8 @@ const TASK_ROTATION_KEY = 'ecoTaskRotation';
 // Hole aktuelle Rotations-Metadaten
 function getTaskRotationMeta() {
     return JSON.parse(localStorage.getItem(TASK_ROTATION_KEY)) || {
-        weeklyTaskIds: [],
-        dailyOtherTaskIds: [],
-        lastWeeklyReset: null,   // ISO-String des letzten Montags
-        lastDailyReset: null     // ISO-String des heutigen Tages
+        selectedTaskIds: [],
+        lastRefresh: null // ISO-String des letzten Tages
     };
 }
 
@@ -18,22 +16,13 @@ function saveTaskRotationMeta(meta) {
     localStorage.setItem(TASK_ROTATION_KEY, JSON.stringify(meta));
 }
 
-// Gibt den Montag der aktuellen Woche als YYYY-MM-DD zurück
-function getCurrentMondayKey() {
-    const now = new Date();
-    const day = now.getDay(); // 0=So, 1=Mo, ...
-    const diff = (day === 0 ? -6 : 1 - day); // Rückwärts zum Montag
-    const monday = new Date(now);
-    monday.setDate(now.getDate() + diff);
-    return monday.toISOString().slice(0, 10);
-}
-
 // Gibt heute als YYYY-MM-DD zurück
 function getTodayDateKey() {
-    return new Date().toISOString().slice(0, 10);
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 }
 
-// Zieht n zufällige eindeutige Indizes aus einem Array-Pool
+// Zieht n zufällige eindeutige Einträge aus einem Array-Pool
 function pickRandom(arr, count) {
     const shuffled = [...arr].sort(() => Math.random() - 0.5);
     return shuffled.slice(0, count);
@@ -43,25 +32,16 @@ function pickRandom(arr, count) {
 function getRotatedTaskIds(allTasks) {
     const meta = getTaskRotationMeta();
     const todayKey = getTodayDateKey();
-    const mondayKey = getCurrentMondayKey();
     let changed = false;
 
-    // Wochenaufgaben: Reset jeden Montag
-    if (meta.lastWeeklyReset !== mondayKey || meta.weeklyTaskIds.length === 0) {
-        const weeklyPool = allTasks.weekly || [];
-        meta.weeklyTaskIds = pickRandom(weeklyPool, Math.min(3, weeklyPool.length)).map(t => t.id);
-        meta.lastWeeklyReset = mondayKey;
-        changed = true;
+    const taskPool = [...(allTasks.weekly || []), ...(allTasks.daily || [])];
+    if (taskPool.length === 0) {
+        return { selectedTaskIds: [], lastRefresh: todayKey };
     }
 
-    // "Weitere Aufgaben": Reset täglich
-    if (meta.lastDailyReset !== todayKey || meta.dailyOtherTaskIds.length === 0) {
-        // Nutze weekly-Pool auch für "weitere", aber pick andere Aufgaben
-        const weeklyPool = allTasks.weekly || [];
-        const alreadyShown = new Set(meta.weeklyTaskIds);
-        const remaining = weeklyPool.filter(t => !alreadyShown.has(t.id));
-        meta.dailyOtherTaskIds = pickRandom(remaining, Math.min(5, remaining.length)).map(t => t.id);
-        meta.lastDailyReset = todayKey;
+    if (meta.lastRefresh !== todayKey || meta.selectedTaskIds.length === 0) {
+        meta.selectedTaskIds = pickRandom(taskPool, Math.min(15, taskPool.length)).map(t => t.id);
+        meta.lastRefresh = todayKey;
         changed = true;
     }
 
@@ -74,6 +54,15 @@ function getTasksById(pool, ids) {
     return ids.map(id => pool.find(t => t.id === id)).filter(Boolean);
 }
 
+function escapeHtmlText(text) {
+    return String(text || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
 // ===== ERSETZE renderTasksSection() =====
 // Diese Funktion rendert die Tasks-Seite dynamisch (statt statisches HTML)
 function renderTasksSection(allTasks) {
@@ -82,20 +71,56 @@ function renderTasksSection(allTasks) {
     if (!weeklyContainer || !otherContainer) return;
 
     const meta = getRotatedTaskIds(allTasks);
-    const weeklyPool = allTasks.weekly || [];
+    const taskPool = [...(allTasks.weekly || []), ...(allTasks.daily || [])];
+    const selectedTasks = getTasksById(taskPool, meta.selectedTaskIds);
 
-    const weeklyTasks = getTasksById(weeklyPool, meta.weeklyTaskIds);
-    const otherTasks = getTasksById(weeklyPool, meta.dailyOtherTaskIds);
+    // Verteile die 15 Tasks auf zwei Bereiche
+    const weeklyTasks = selectedTasks.slice(0, 8);
+    const otherTasks = selectedTasks.slice(8);
 
     renderTaskList(weeklyContainer, weeklyTasks);
     renderTaskList(otherContainer, otherTasks);
+    renderTaskRefreshInfo(selectedTasks.length);
 
     // Abgeschlossene & akzeptierte Aufgaben sofort ausblenden
     syncAcceptedTasksToUI();
 }
 
+function renderTaskRefreshInfo(count) {
+    const descEl = document.getElementById('taskRefreshDescription');
+    const countdownEl = document.getElementById('taskRefreshCountdown');
+    if (descEl) descEl.textContent = `${count} zufällige Aufgaben für heute`;
+    if (countdownEl) {
+        const remaining = getTimeUntilMidnight();
+        countdownEl.textContent = `${remaining.hours}h ${remaining.minutes}m ${remaining.seconds}s bis zur Aktualisierung`;
+    }
+}
+
+function getTimeUntilMidnight() {
+    const now = new Date();
+    const endOfDay = new Date(now);
+    endOfDay.setHours(23, 59, 59, 999);
+    let diff = endOfDay - now;
+    if (diff < 0) diff = 0;
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+    return { hours, minutes, seconds };
+}
+
+function updateTaskRefreshCountdown() {
+    const countdownEl = document.getElementById('taskRefreshCountdown');
+    if (!countdownEl) return;
+    const remaining = getTimeUntilMidnight();
+    countdownEl.textContent = `${remaining.hours}h ${remaining.minutes}m ${remaining.seconds}s bis zur Aktualisierung`;
+}
+
 function renderTaskList(container, tasks) {
     container.innerHTML = '';
+    if (tasks.length === 0) {
+        container.innerHTML = '<p class="today-challenges-empty">Keine Aufgaben verfügbar.</p>';
+        return;
+    }
     tasks.forEach(task => {
         const card = document.createElement('div');
         card.className = 'task-card';
@@ -107,8 +132,8 @@ function renderTaskList(container, tasks) {
                 <h3 class="task-title">${escapeHtmlText(task.task)}</h3>
                 <p class="task-description">Erledige diese Aufgabe und helfe der Umwelt!</p>
                 <div class="task-footer">
-                    <span class="task-points"><i class="fas fa-star"></i> 50 Punkte</span>
-                    <span class="task-time"><i class="fas fa-clock"></i> Diese Woche</span>
+                    <span class="task-points"><i class="fas fa-star"></i> ${task.points || 20} Punkte</span>
+                    <span class="task-time"><i class="fas fa-clock"></i> Bis Mitternacht</span>
                 </div>
             </div>
             <button class="task-accept-btn"
@@ -205,7 +230,7 @@ function renderTaskList(container, tasks) {
 document.addEventListener('DOMContentLoaded', () => {
     // Warte bis allTasks geladen ist, dann Rotation anwenden
     const _checkInterval = setInterval(() => {
-        if ((allTasks.weekly || []).length > 0) {
+        if ((allTasks.weekly || []).length > 0 || (allTasks.daily || []).length > 0) {
             clearInterval(_checkInterval);
             renderTasksSection(allTasks);
         }
@@ -214,6 +239,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Fallback nach 3s
     setTimeout(() => {
         clearInterval(_checkInterval);
-        if ((allTasks.weekly || []).length > 0) renderTasksSection(allTasks);
+        if ((allTasks.weekly || []).length > 0 || (allTasks.daily || []).length > 0) renderTasksSection(allTasks);
     }, 3000);
+
+    updateTaskRefreshCountdown();
+    setInterval(updateTaskRefreshCountdown, 1000);
 });
